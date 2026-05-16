@@ -43,6 +43,42 @@ async function runMigrations() {
     // ── 004: seed default cms_pages if missing ────────────────────────────────
     const pages = [
       {
+        slug: 'home',
+        title: 'Home Page',
+        content: JSON.stringify({
+          hero: { heading: 'Premium FMCG Products', subheading: 'Quality groceries, beverages and household essentials at unbeatable prices across Ghana.', button_text: 'Shop Now', button_link: '/shop' },
+          features: [
+            { icon: 'Truck', title: 'Fast Delivery', desc: 'Accra & beyond' },
+            { icon: 'ShieldCheck', title: 'Secure Payment', desc: 'PayStack & MoMo' },
+            { icon: 'Award', title: 'Quality Products', desc: 'Verified brands' },
+            { icon: 'Headphones', title: '24/7 Support', desc: 'Always here' },
+          ],
+          flash_sale: { enabled: true, title: 'Up to 30% Off Selected Items', subtitle: "Limited time offer — grab your favourites before they're gone!", badge: 'Flash Sale' },
+          stats: [
+            { value: '500+', label: 'Products' },
+            { value: '5,000+', label: 'Happy Customers' },
+            { value: '10+', label: 'Cities Covered' },
+            { value: '5', label: 'Years of Excellence' },
+          ],
+          promo_banners: [
+            { title: 'Fresh Stock Just In', subtitle: 'New products added weekly. Be the first to shop!', badge: 'New Arrivals', link: '/shop', button_text: 'Shop New' },
+            { title: 'Best Deals Just For You', subtitle: 'Exclusive savings on your favourites every week.', badge: 'Best Deals', link: '/shop', button_text: 'Grab Deals' },
+          ],
+          categories_heading: 'Shop by Category',
+          categories_subheading: 'Browse our wide selection of product categories',
+          featured_heading: 'Featured Products',
+          featured_subheading: 'Hand-picked best sellers and new arrivals',
+          testimonials: [
+            { name: 'Abena Mensah', role: 'Regular Customer', text: 'KW Enterprise has the best quality products. Delivery is always on time and the packaging is perfect.', rating: 5 },
+            { name: 'Kwame Asante', role: 'Business Owner', text: "I've been ordering wholesale from KW for 2 years. The prices are competitive and they always have stock.", rating: 5 },
+            { name: 'Ama Boateng', role: 'Homemaker', text: "The gift boxes are absolutely beautiful! I ordered one for my mother's birthday and she loved it.", rating: 5 },
+          ],
+          newsletter: { heading: 'Get Exclusive Deals & Offers', subheading: 'Subscribe to our newsletter and be the first to know about promotions and new products.' },
+          brands: ['Nestlé', 'Unilever', 'Procter & Gamble', 'Coca-Cola', 'Heineken', "Kellogg's"],
+        }),
+        is_published: true,
+      },
+      {
         slug: 'about',
         title: 'About Us',
         content: JSON.stringify({

@@ -6,6 +6,7 @@ export interface Category {
   image_url?: string;
   sort_order: number;
   parent_id?: string | null;
+  product_count?: number;
   children?: Category[];
 }
 

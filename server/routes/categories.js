@@ -2,14 +2,20 @@ const router = require('express').Router();
 const pool = require('../db/pool');
 const { auth, adminOnly } = require('../middleware/auth');
 
-// GET /api/categories — returns flat list with parent_id; client builds tree
+// GET /api/categories — flat list with product_count; client builds tree
 router.get('/', async (_req, res) => {
   try {
-    const { rows } = await pool.query(
-      'SELECT * FROM categories ORDER BY sort_order, name',
-    );
+    const { rows } = await pool.query(`
+      SELECT c.*,
+             CAST(COUNT(DISTINCT p.id) AS INTEGER) AS product_count
+      FROM categories c
+      LEFT JOIN products p ON p.category_id = c.id AND p.is_active = true
+      GROUP BY c.id
+      ORDER BY c.sort_order, c.name
+    `);
     res.json(rows);
-  } catch {
+  } catch (err) {
+    console.error('[categories GET]', err.message);
     res.status(500).json({ error: 'Failed to fetch categories' });
   }
 });

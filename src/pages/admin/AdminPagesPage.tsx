@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Save, Eye, Loader2, Mail, MailOpen, Trash2, RefreshCw, Plus, Minus,
-  FileText, Info, Briefcase, HelpCircle, Shield, Phone,
+  FileText, Info, Briefcase, HelpCircle, Shield, Phone, Home,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -34,6 +34,7 @@ interface ContactMessage {
 
 // ── Tab config ────────────────────────────────────────────────────────────────
 const PAGE_TABS = [
+  { slug: 'home',     label: 'Home',     icon: Home,       path: '/' },
   { slug: 'about',    label: 'About',    icon: Info,       path: '/about' },
   { slug: 'services', label: 'Services', icon: Briefcase,  path: '/services' },
   { slug: 'contact',  label: 'Contact',  icon: Phone,      path: '/contact' },
@@ -78,6 +79,219 @@ function HeroEditor({
         <SectionField label="Background Image URL" value={hero.image_url || ''} onChange={v => set('image_url', v)} placeholder="https://..." />
       </CardContent>
     </Card>
+  );
+}
+
+// ── Home editor ───────────────────────────────────────────────────────────────
+function HomeEditor({ content, onChange }: { content: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
+  type Feature = { icon: string; title: string; desc: string };
+  type Stat = { value: string; label: string };
+  type Testimonial = { name: string; role: string; text: string; rating: number };
+  type PromoBanner = { title: string; subtitle: string; badge: string; link: string; button_text: string };
+
+  const features: Feature[] = (content.features as Feature[]) || [];
+  const stats: Stat[] = (content.stats as Stat[]) || [];
+  const testimonials: Testimonial[] = (content.testimonials as Testimonial[]) || [];
+  const promoBanners: PromoBanner[] = (content.promo_banners as PromoBanner[]) || [];
+  const brands: string[] = (content.brands as string[]) || [];
+  const flashSale = (content.flash_sale as Record<string, unknown>) || {};
+  const newsletter = (content.newsletter as Record<string, string>) || {};
+
+  const setField = (k: string, v: unknown) => onChange({ ...content, [k]: v });
+  const setFlash = (k: string, v: unknown) => onChange({ ...content, flash_sale: { ...flashSale, [k]: v } });
+  const setNewsletter = (k: string, v: string) => onChange({ ...content, newsletter: { ...newsletter, [k]: v } });
+  const setFeature = (i: number, k: keyof Feature, v: string) => {
+    const u = [...features]; u[i] = { ...u[i], [k]: v }; setField('features', u);
+  };
+  const setStat = (i: number, k: keyof Stat, v: string) => {
+    const u = [...stats]; u[i] = { ...u[i], [k]: v }; setField('stats', u);
+  };
+  const setTestimonial = (i: number, k: keyof Testimonial, v: string | number) => {
+    const u = [...testimonials]; u[i] = { ...u[i], [k]: v }; setField('testimonials', u);
+  };
+  const setPromo = (i: number, k: keyof PromoBanner, v: string) => {
+    const u = [...promoBanners]; u[i] = { ...u[i], [k]: v }; setField('promo_banners', u);
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Hero */}
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm font-semibold">Hero Section</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <SectionField label="Hero Heading" value={(content.hero as Record<string,string>)?.heading || ''} onChange={v => onChange({ ...content, hero: { ...(content.hero as Record<string,string>), heading: v } })} />
+          <SectionField label="Hero Sub-heading" value={(content.hero as Record<string,string>)?.subheading || ''} onChange={v => onChange({ ...content, hero: { ...(content.hero as Record<string,string>), subheading: v } })} multiline />
+          <div className="grid grid-cols-2 gap-3">
+            <SectionField label="Button Text" value={(content.hero as Record<string,string>)?.button_text || ''} onChange={v => onChange({ ...content, hero: { ...(content.hero as Record<string,string>), button_text: v } })} />
+            <SectionField label="Button Link" value={(content.hero as Record<string,string>)?.button_link || ''} onChange={v => onChange({ ...content, hero: { ...(content.hero as Record<string,string>), button_link: v } })} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Features strip */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold">Features Strip (4 boxes)</CardTitle>
+            <Button type="button" size="sm" variant="outline" className="h-7 text-xs"
+              onClick={() => setField('features', [...features, { icon: 'Star', title: '', desc: '' }])}>
+              <Plus className="w-3 h-3 mr-1" /> Add
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {features.map((f, i) => (
+            <div key={i} className="flex gap-2 items-start border rounded-lg p-3 bg-gray-50/50">
+              <div className="flex-1 grid grid-cols-3 gap-2">
+                <Input placeholder="Icon name" value={f.icon} onChange={e => setFeature(i, 'icon', e.target.value)} className="bg-white col-span-1" />
+                <Input placeholder="Title" value={f.title} onChange={e => setFeature(i, 'title', e.target.value)} className="bg-white" />
+                <Input placeholder="Description" value={f.desc} onChange={e => setFeature(i, 'desc', e.target.value)} className="bg-white" />
+              </div>
+              <Button type="button" size="sm" variant="ghost" className="h-9 w-9 p-0 text-destructive shrink-0"
+                onClick={() => setField('features', features.filter((_, j) => j !== i))}>
+                <Minus className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Flash sale */}
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm font-semibold">Flash Sale Banner</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="flash-enabled" checked={!!flashSale.enabled}
+              onChange={e => setFlash('enabled', e.target.checked)} className="w-4 h-4 accent-amber-600" />
+            <label htmlFor="flash-enabled" className="text-sm">Show flash sale banner</label>
+          </div>
+          <SectionField label="Badge Text" value={(flashSale.badge as string) || ''} onChange={v => setFlash('badge', v)} placeholder="Flash Sale" />
+          <SectionField label="Title" value={(flashSale.title as string) || ''} onChange={v => setFlash('title', v)} />
+          <SectionField label="Subtitle" value={(flashSale.subtitle as string) || ''} onChange={v => setFlash('subtitle', v)} multiline />
+        </CardContent>
+      </Card>
+
+      {/* Categories & Featured section headings */}
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm font-semibold">Section Headings</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <SectionField label="Categories Section Heading" value={(content.categories_heading as string) || ''} onChange={v => setField('categories_heading', v)} />
+          <SectionField label="Categories Section Sub-heading" value={(content.categories_subheading as string) || ''} onChange={v => setField('categories_subheading', v)} />
+          <SectionField label="Featured Products Heading" value={(content.featured_heading as string) || ''} onChange={v => setField('featured_heading', v)} />
+          <SectionField label="Featured Products Sub-heading" value={(content.featured_subheading as string) || ''} onChange={v => setField('featured_subheading', v)} />
+        </CardContent>
+      </Card>
+
+      {/* Stats bar */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold">Stats Bar</CardTitle>
+            <Button type="button" size="sm" variant="outline" className="h-7 text-xs"
+              onClick={() => setField('stats', [...stats, { value: '', label: '' }])}>
+              <Plus className="w-3 h-3 mr-1" /> Add
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {stats.map((s, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <Input placeholder="Value (e.g. 500+)" value={s.value} onChange={e => setStat(i, 'value', e.target.value)} className="w-32" />
+              <Input placeholder="Label (e.g. Products)" value={s.label} onChange={e => setStat(i, 'label', e.target.value)} className="flex-1" />
+              <Button type="button" size="sm" variant="ghost" className="h-9 w-9 p-0 text-destructive shrink-0"
+                onClick={() => setField('stats', stats.filter((_, j) => j !== i))}>
+                <Minus className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Promo banners */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold">Promo Banners (2-column)</CardTitle>
+            <Button type="button" size="sm" variant="outline" className="h-7 text-xs"
+              onClick={() => setField('promo_banners', [...promoBanners, { title: '', subtitle: '', badge: '', link: '/shop', button_text: 'Shop Now' }])}>
+              <Plus className="w-3 h-3 mr-1" /> Add
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {promoBanners.map((b, i) => (
+            <div key={i} className="border rounded-lg p-3 space-y-2 bg-gray-50/50">
+              <div className="flex gap-2 items-center">
+                <Input placeholder="Title" value={b.title} onChange={e => setPromo(i, 'title', e.target.value)} className="flex-1 bg-white font-medium" />
+                <Button type="button" size="sm" variant="ghost" className="h-9 w-9 p-0 text-destructive shrink-0"
+                  onClick={() => setField('promo_banners', promoBanners.filter((_, j) => j !== i))}>
+                  <Minus className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+              <Input placeholder="Subtitle" value={b.subtitle} onChange={e => setPromo(i, 'subtitle', e.target.value)} className="bg-white" />
+              <div className="grid grid-cols-3 gap-2">
+                <Input placeholder="Badge text" value={b.badge} onChange={e => setPromo(i, 'badge', e.target.value)} className="bg-white" />
+                <Input placeholder="Button text" value={b.button_text} onChange={e => setPromo(i, 'button_text', e.target.value)} className="bg-white" />
+                <Input placeholder="Link (/shop)" value={b.link} onChange={e => setPromo(i, 'link', e.target.value)} className="bg-white" />
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Testimonials */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold">Testimonials</CardTitle>
+            <Button type="button" size="sm" variant="outline" className="h-7 text-xs"
+              onClick={() => setField('testimonials', [...testimonials, { name: '', role: '', text: '', rating: 5 }])}>
+              <Plus className="w-3 h-3 mr-1" /> Add
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {testimonials.map((t, i) => (
+            <div key={i} className="border rounded-lg p-3 space-y-2 bg-gray-50/50">
+              <div className="flex gap-2 items-center">
+                <Input placeholder="Name" value={t.name} onChange={e => setTestimonial(i, 'name', e.target.value)} className="flex-1 bg-white" />
+                <Input placeholder="Role" value={t.role} onChange={e => setTestimonial(i, 'role', e.target.value)} className="flex-1 bg-white" />
+                <Input type="number" min={1} max={5} placeholder="5" value={t.rating}
+                  onChange={e => setTestimonial(i, 'rating', Number(e.target.value))} className="w-16 bg-white" />
+                <Button type="button" size="sm" variant="ghost" className="h-9 w-9 p-0 text-destructive shrink-0"
+                  onClick={() => setField('testimonials', testimonials.filter((_, j) => j !== i))}>
+                  <Minus className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+              <Textarea placeholder="Testimonial text" value={t.text} onChange={e => setTestimonial(i, 'text', e.target.value)}
+                rows={2} className="resize-none bg-white" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      {/* Newsletter */}
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm font-semibold">Newsletter Section</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <SectionField label="Heading" value={newsletter.heading || ''} onChange={v => setNewsletter('heading', v)} />
+          <SectionField label="Sub-heading" value={newsletter.subheading || ''} onChange={v => setNewsletter('subheading', v)} multiline />
+        </CardContent>
+      </Card>
+
+      {/* Brands */}
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm font-semibold">Brand Names (comma-separated)</CardTitle></CardHeader>
+        <CardContent>
+          <Textarea
+            value={brands.join(', ')}
+            onChange={e => setField('brands', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+            rows={2} className="resize-none"
+            placeholder="Nestlé, Unilever, Coca-Cola…"
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -545,6 +759,7 @@ function PageEditor({ page, onSaved }: { page: CmsPage; onSaved: (p: CmsPage) =>
 
   const renderEditor = () => {
     switch (page.slug) {
+      case 'home':     return <HomeEditor content={editContent} onChange={setEditContent} />;
       case 'about':    return <AboutEditor content={editContent} onChange={setEditContent} />;
       case 'services': return <ServicesEditor content={editContent} onChange={setEditContent} />;
       case 'contact':  return <ContactEditor content={editContent} onChange={setEditContent} />;
