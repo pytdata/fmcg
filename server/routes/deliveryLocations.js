@@ -41,8 +41,9 @@ router.post('/', auth, adminOnly, async (req, res) => {
       [name, region || null, delivery_fee, is_active !== false, sort_order || 0],
     );
     res.status(201).json(rows[0]);
-  } catch {
-    res.status(500).json({ error: 'Failed to create delivery location' });
+  } catch (err) {
+    console.error('[delivery-locations POST]', err.message);
+    res.status(500).json({ error: 'Failed to create delivery location', detail: err.message });
   }
 });
 
@@ -58,8 +59,9 @@ router.put('/:id', auth, adminOnly, async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ error: 'Location not found' });
     res.json(rows[0]);
-  } catch {
-    res.status(500).json({ error: 'Failed to update delivery location' });
+  } catch (err) {
+    console.error('[delivery-locations PUT]', err.message);
+    res.status(500).json({ error: 'Failed to update delivery location', detail: err.message });
   }
 });
 
@@ -68,8 +70,9 @@ router.delete('/:id', auth, adminOnly, async (req, res) => {
   try {
     await pool.query('DELETE FROM delivery_locations WHERE id=$1', [req.params.id]);
     res.json({ success: true });
-  } catch {
-    res.status(500).json({ error: 'Failed to delete delivery location' });
+  } catch (err) {
+    console.error('[delivery-locations DELETE]', err.message);
+    res.status(500).json({ error: 'Failed to delete delivery location', detail: err.message });
   }
 });
 

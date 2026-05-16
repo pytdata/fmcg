@@ -6,6 +6,9 @@ const morgan = require('morgan');
 const path = require('path');
 const runMigrations = require('./db/migrate');
 
+// Run migrations immediately at module load — works in both Express and Vercel serverless
+runMigrations().catch(err => console.error('[startup] Migration failed:', err.message));
+
 const app = express();
 
 // ── Middleware ────────────────────────────────────────────────────────────────
@@ -55,8 +58,7 @@ app.use((err, _req, res, _next) => {
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, async () => {
-  await runMigrations();
+app.listen(PORT, () => {
   console.log(`🚀 KW Enterprise API running on port ${PORT}`);
 });
 

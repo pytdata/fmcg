@@ -26,8 +26,9 @@ router.post('/', auth, adminOnly, async (req, res) => {
     );
     res.status(201).json(rows[0]);
   } catch (err) {
+    console.error('[categories POST]', err.message);
     if (err.code === '23505') return res.status(409).json({ error: 'Slug already exists' });
-    res.status(500).json({ error: 'Failed to create category' });
+    res.status(500).json({ error: 'Failed to create category', detail: err.message });
   }
 });
 
@@ -46,8 +47,9 @@ router.put('/:id', auth, adminOnly, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Category not found' });
     res.json(rows[0]);
   } catch (err) {
+    console.error('[categories PUT]', err.message);
     if (err.code === '23505') return res.status(409).json({ error: 'Slug already exists' });
-    res.status(500).json({ error: 'Failed to update category' });
+    res.status(500).json({ error: 'Failed to update category', detail: err.message });
   }
 });
 
@@ -58,8 +60,9 @@ router.delete('/:id', auth, adminOnly, async (req, res) => {
     await pool.query('UPDATE categories SET parent_id=NULL WHERE parent_id=$1', [req.params.id]);
     await pool.query('DELETE FROM categories WHERE id=$1', [req.params.id]);
     res.json({ success: true });
-  } catch {
-    res.status(500).json({ error: 'Failed to delete category' });
+  } catch (err) {
+    console.error('[categories DELETE]', err.message);
+    res.status(500).json({ error: 'Failed to delete category', detail: err.message });
   }
 });
 
