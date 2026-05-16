@@ -120,8 +120,8 @@ export default function AdminDashboardPage() {
     }).finally(() => setLoading(false));
   }, []);
 
-  const lastRev = monthlyData.at(-1)?.revenue ?? 0;
-  const prevRev = monthlyData.at(-2)?.revenue ?? 0;
+  const lastRev = monthlyData[monthlyData.length - 1]?.revenue ?? 0;
+  const prevRev = monthlyData[monthlyData.length - 2]?.revenue ?? 0;
   const revTrend = pct(lastRev, prevRev);
 
   const statCards = [

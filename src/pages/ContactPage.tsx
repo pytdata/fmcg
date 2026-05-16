@@ -67,6 +67,23 @@ export default function ContactPage() {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent]       = useState(false);
+  const [rateLimited, setRateLimited] = useState(false);
+  const [nextAllowed, setNextAllowed] = useState<Date | null>(null);
+
+  // ── Check localStorage cooldown on mount ──────────────────────────────────
+  useEffect(() => {
+    const stored = localStorage.getItem('kw_contact_sent_at');
+    if (stored) {
+      const sentAt = new Date(stored);
+      const allowed = new Date(sentAt.getTime() + 36 * 60 * 60 * 1000);
+      if (new Date() < allowed) {
+        setRateLimited(true);
+        setNextAllowed(allowed);
+      } else {
+        localStorage.removeItem('kw_contact_sent_at');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     getCmsPage('contact').then(page => {
@@ -80,16 +97,29 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (rateLimited) return;
     setSending(true);
     try {
       await api.post('/api/settings/contact-message', { name, email, phone, subject, message });
+      // Store send timestamp in localStorage for client-side guard
+      localStorage.setItem('kw_contact_sent_at', new Date().toISOString());
       setSent(true);
       toast.success('Message sent! We\'ll get back to you within 24 hours.');
-    } catch {
-      // Graceful fallback: open mailto
-      const mailto = `mailto:${content.email || STATIC.email}?subject=${encodeURIComponent(subject || 'Enquiry')}&body=${encodeURIComponent(`Name: ${name}\nPhone: ${phone}\n\n${message}`)}`;
-      window.location.href = mailto;
-      toast.success('Opening your email client…');
+    } catch (err: unknown) {
+      // Check for 429 rate-limit response
+      const errMsg = err instanceof Error ? err.message : '';
+      if (errMsg.includes('rate_limited') || errMsg.includes('429') || errMsg.includes('already sent')) {
+        const allowed = new Date(Date.now() + 36 * 60 * 60 * 1000);
+        setRateLimited(true);
+        setNextAllowed(allowed);
+        localStorage.setItem('kw_contact_sent_at', new Date().toISOString());
+        toast.error('You already sent a message recently. Please wait 36 hours before sending again.');
+      } else {
+        // Graceful fallback: open mailto
+        const mailto = `mailto:${content.email || STATIC.email}?subject=${encodeURIComponent(subject || 'Enquiry')}&body=${encodeURIComponent(`Name: ${name}\nPhone: ${phone}\n\n${message}`)}`;
+        window.location.href = mailto;
+        toast.success('Opening your email client…');
+      }
     } finally {
       setSending(false);
     }
@@ -150,7 +180,28 @@ export default function ContactPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-2 text-balance">Send Us a Message</h2>
             <p className="text-gray-500 text-sm mb-7 text-pretty">Fill in the form below and we'll get back to you within 24 hours.</p>
 
-            {sent ? (
+            {rateLimited ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+                  <CheckCircle2 className="w-8 h-8 text-amber-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Message Already Sent</h3>
+                <p className="text-gray-500 text-sm max-w-sm text-pretty">
+                  You already sent us a message recently. To prevent spam, we allow one message per 36 hours.
+                  {nextAllowed && (
+                    <> You can send another message after{' '}
+                      <strong>{nextAllowed.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</strong>.
+                    </>
+                  )}
+                </p>
+                <p className="text-sm text-gray-400 mt-3">
+                  Need urgent help? Email us directly at{' '}
+                  <a href={`mailto:${c.email || STATIC.email}`} className="text-amber-600 hover:underline">
+                    {c.email || STATIC.email}
+                  </a>
+                </p>
+              </div>
+            ) : sent ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
                   <CheckCircle2 className="w-8 h-8 text-green-600" />
@@ -159,13 +210,6 @@ export default function ContactPage() {
                 <p className="text-gray-500 text-sm max-w-sm text-pretty">
                   Thank you for reaching out. Our team will respond to your message within 24 business hours.
                 </p>
-                <Button
-                  onClick={() => { setSent(false); setName(''); setEmail(''); setPhone(''); setSubject(''); setMessage(''); }}
-                  variant="outline"
-                  className="mt-6"
-                >
-                  Send Another Message
-                </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
