@@ -1,0 +1,26 @@
+{
+  "success": true,
+  "timestamp": "2026-05-17T01:23:23.202288286+08:00",
+  "commit_id": "9679852d7f928637843f3bef14df2a38f608b16e",
+  "request": {
+    "apiList": [
+      "plugin-stripe"
+    ],
+    "appId": "app-bojrafz0d6v5",
+    "commitId": "9679852d7f928637843f3bef14df2a38f608b16e",
+    "conversationId": "conv-bojrafz0d6v4",
+    "outputUrl": "https://miaoda-op-sourcecode.s3.us-west-2.amazonaws.com/source_code/dist/app-bojrafz0d6v5/index.html",
+    "prdContent": "",
+    "sourceCodeZipName": "app-bojrafz0d6v5",
+    "sourcecodeUrl": "https://miaoda-op-sourcecode.s3.us-west-2.amazonaws.com/source_code/projects/app-bojrafz0d6v5-9679852d7f928637843f3bef14df2a38f608b16e.zip",
+    "userId": "user-bo1v51m4ml1c"
+  },
+  "response": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"versionDesc\":\"Application updates\",\"versionId\":\"app_version-bon9duet9w5d\",\"versionLabel\":\"v8\"}"
+      }
+    ]
+  }
+}

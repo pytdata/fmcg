@@ -1,0 +1,16 @@
+# Sensitive & generated files
+.env
+server/.env
+.env.local
+*.pem
+*.key
+# Generated
+node_modules/
+dist/
+build/
+# pnpm files — Vercel should use npm (avoids "packages field missing" error)
+pnpm-lock.yaml
+pnpm-workspace.yaml
+# Logs & context
+*.log
+historical_context.txt
