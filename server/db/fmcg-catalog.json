@@ -1,0 +1,2158 @@
+{
+  "main_categories": [
+    {
+      "name": "Oral Care",
+      "slug": "oral-care",
+      "sort_order": 0
+    },
+    {
+      "name": "Personal Care & Beauty",
+      "slug": "personal-care-beauty",
+      "sort_order": 1
+    },
+    {
+      "name": "Feminine & Baby Care",
+      "slug": "feminine-baby-care",
+      "sort_order": 2
+    },
+    {
+      "name": "Home Care & Cleaning",
+      "slug": "home-care-cleaning",
+      "sort_order": 3
+    },
+    {
+      "name": "Air Care & Fragrance",
+      "slug": "air-care-fragrance",
+      "sort_order": 4
+    },
+    {
+      "name": "Pest Control",
+      "slug": "pest-control",
+      "sort_order": 5
+    },
+    {
+      "name": "Food & Confectionery",
+      "slug": "food-confectionery",
+      "sort_order": 6
+    },
+    {
+      "name": "Health & Wellness",
+      "slug": "health-wellness",
+      "sort_order": 7
+    },
+    {
+      "name": "Stationery & Office",
+      "slug": "stationery-office",
+      "sort_order": 8
+    },
+    {
+      "name": "Household Essentials",
+      "slug": "household-essentials",
+      "sort_order": 9
+    }
+  ],
+  "sub_categories": [
+    {
+      "name": "Abrasive",
+      "slug": "abrasive",
+      "parent_slug": "home-care-cleaning",
+      "sort_order": 0
+    },
+    {
+      "name": "Adhesive",
+      "slug": "adhesive",
+      "parent_slug": "stationery-office",
+      "sort_order": 0
+    },
+    {
+      "name": "Air Freshener",
+      "slug": "air-freshener",
+      "parent_slug": "air-care-fragrance",
+      "sort_order": 0
+    },
+    {
+      "name": "Antiseptic Liquid",
+      "slug": "antiseptic-liquid",
+      "parent_slug": "health-wellness",
+      "sort_order": 0
+    },
+    {
+      "name": "Apple Cider Vinegar",
+      "slug": "apple-cider-vinegar",
+      "parent_slug": "food-confectionery",
+      "sort_order": 0
+    },
+    {
+      "name": "Baby Wipes",
+      "slug": "baby-wipes",
+      "parent_slug": "feminine-baby-care",
+      "sort_order": 0
+    },
+    {
+      "name": "Bar Soap",
+      "slug": "bar-soap",
+      "parent_slug": "personal-care-beauty",
+      "sort_order": 0
+    },
+    {
+      "name": "Bath Gel",
+      "slug": "bath-gel",
+      "parent_slug": "personal-care-beauty",
+      "sort_order": 1
+    },
+    {
+      "name": "Batteries",
+      "slug": "batteries",
+      "parent_slug": "household-essentials",
+      "sort_order": 0
+    },
+    {
+      "name": "Bleach",
+      "slug": "bleach",
+      "parent_slug": "home-care-cleaning",
+      "sort_order": 1
+    },
+    {
+      "name": "Body Lotion",
+      "slug": "body-lotion",
+      "parent_slug": "personal-care-beauty",
+      "sort_order": 2
+    },
+    {
+      "name": "Brown Sugar",
+      "slug": "brown-sugar",
+      "parent_slug": "food-confectionery",
+      "sort_order": 1
+    },
+    {
+      "name": "Camphor",
+      "slug": "camphor",
+      "parent_slug": "air-care-fragrance",
+      "sort_order": 1
+    },
+    {
+      "name": "Candle",
+      "slug": "candle",
+      "parent_slug": "household-essentials",
+      "sort_order": 1
+    },
+    {
+      "name": "Candy",
+      "slug": "candy",
+      "parent_slug": "food-confectionery",
+      "sort_order": 2
+    },
+    {
+      "name": "Chewing Gum",
+      "slug": "chewing-gum",
+      "parent_slug": "food-confectionery",
+      "sort_order": 3
+    },
+    {
+      "name": "Chocolate",
+      "slug": "chocolate",
+      "parent_slug": "food-confectionery",
+      "sort_order": 4
+    },
+    {
+      "name": "Deo Spray",
+      "slug": "deo-spray",
+      "parent_slug": "personal-care-beauty",
+      "sort_order": 3
+    },
+    {
+      "name": "Detergent",
+      "slug": "detergent",
+      "parent_slug": "home-care-cleaning",
+      "sort_order": 2
+    },
+    {
+      "name": "Dish Wash",
+      "slug": "dish-wash",
+      "parent_slug": "home-care-cleaning",
+      "sort_order": 3
+    },
+    {
+      "name": "Disinfectant",
+      "slug": "disinfectant",
+      "parent_slug": "home-care-cleaning",
+      "sort_order": 4
+    },
+    {
+      "name": "Envelope",
+      "slug": "envelope",
+      "parent_slug": "stationery-office",
+      "sort_order": 1
+    },
+    {
+      "name": "Exercise Book",
+      "slug": "exercise-book",
+      "parent_slug": "stationery-office",
+      "sort_order": 2
+    },
+    {
+      "name": "Fabric Softener",
+      "slug": "fabric-softener",
+      "parent_slug": "home-care-cleaning",
+      "sort_order": 5
+    },
+    {
+      "name": "Face Cream",
+      "slug": "face-cream",
+      "parent_slug": "personal-care-beauty",
+      "sort_order": 4
+    },
+    {
+      "name": "Floor Cleaner",
+      "slug": "floor-cleaner",
+      "parent_slug": "home-care-cleaning",
+      "sort_order": 6
+    },
+    {
+      "name": "Furniture Spray",
+      "slug": "furniture-spray",
+      "parent_slug": "home-care-cleaning",
+      "sort_order": 7
+    },
+    {
+      "name": "Glass Cleaner",
+      "slug": "glass-cleaner",
+      "parent_slug": "home-care-cleaning",
+      "sort_order": 8
+    },
+    {
+      "name": "Hand Wash",
+      "slug": "hand-wash",
+      "parent_slug": "personal-care-beauty",
+      "sort_order": 5
+    },
+    {
+      "name": "Hanger",
+      "slug": "hanger",
+      "parent_slug": "household-essentials",
+      "sort_order": 2
+    },
+    {
+      "name": "Home Fragrance",
+      "slug": "home-fragrance",
+      "parent_slug": "air-care-fragrance",
+      "sort_order": 2
+    },
+    {
+      "name": "Insect Repellent",
+      "slug": "insect-repellent",
+      "parent_slug": "pest-control",
+      "sort_order": 0
+    },
+    {
+      "name": "Insecticide Coil",
+      "slug": "insecticide-coil",
+      "parent_slug": "pest-control",
+      "sort_order": 1
+    },
+    {
+      "name": "Insecticide Spray",
+      "slug": "insecticide-spray",
+      "parent_slug": "pest-control",
+      "sort_order": 2
+    },
+    {
+      "name": "Lighter",
+      "slug": "lighter",
+      "parent_slug": "household-essentials",
+      "sort_order": 3
+    },
+    {
+      "name": "Mouth Wash",
+      "slug": "mouth-wash",
+      "parent_slug": "oral-care",
+      "sort_order": 0
+    },
+    {
+      "name": "Ointment",
+      "slug": "ointment",
+      "parent_slug": "health-wellness",
+      "sort_order": 1
+    },
+    {
+      "name": "Olive Oil",
+      "slug": "olive-oil",
+      "parent_slug": "food-confectionery",
+      "sort_order": 5
+    },
+    {
+      "name": "Oral Care",
+      "slug": "oral-care",
+      "parent_slug": "oral-care",
+      "sort_order": 1
+    },
+    {
+      "name": "Panty Liner",
+      "slug": "panty-liner",
+      "parent_slug": "feminine-baby-care",
+      "sort_order": 1
+    },
+    {
+      "name": "Pegs",
+      "slug": "pegs",
+      "parent_slug": "household-essentials",
+      "sort_order": 4
+    },
+    {
+      "name": "Pens",
+      "slug": "pens",
+      "parent_slug": "stationery-office",
+      "sort_order": 3
+    },
+    {
+      "name": "Perfume",
+      "slug": "perfume",
+      "parent_slug": "personal-care-beauty",
+      "sort_order": 6
+    },
+    {
+      "name": "Polish",
+      "slug": "polish",
+      "parent_slug": "home-care-cleaning",
+      "sort_order": 9
+    },
+    {
+      "name": "Razor",
+      "slug": "razor",
+      "parent_slug": "personal-care-beauty",
+      "sort_order": 7
+    },
+    {
+      "name": "Roll On",
+      "slug": "roll-on",
+      "parent_slug": "personal-care-beauty",
+      "sort_order": 8
+    },
+    {
+      "name": "Sanitary Pads",
+      "slug": "sanitary-pads",
+      "parent_slug": "feminine-baby-care",
+      "sort_order": 2
+    },
+    {
+      "name": "Shaving Cream",
+      "slug": "shaving-cream",
+      "parent_slug": "personal-care-beauty",
+      "sort_order": 9
+    },
+    {
+      "name": "Shaving Stick",
+      "slug": "shaving-stick",
+      "parent_slug": "personal-care-beauty",
+      "sort_order": 10
+    },
+    {
+      "name": "Spray Starch",
+      "slug": "spray-starch",
+      "parent_slug": "home-care-cleaning",
+      "sort_order": 10
+    },
+    {
+      "name": "Stationery",
+      "slug": "stationery",
+      "parent_slug": "stationery-office",
+      "sort_order": 4
+    },
+    {
+      "name": "Tissue",
+      "slug": "tissue",
+      "parent_slug": "household-essentials",
+      "sort_order": 5
+    },
+    {
+      "name": "Toilet Cleaner",
+      "slug": "toilet-cleaner",
+      "parent_slug": "home-care-cleaning",
+      "sort_order": 11
+    },
+    {
+      "name": "Tooth Brush",
+      "slug": "tooth-brush",
+      "parent_slug": "oral-care",
+      "sort_order": 2
+    },
+    {
+      "name": "Tooth Paste",
+      "slug": "tooth-paste",
+      "parent_slug": "oral-care",
+      "sort_order": 3
+    }
+  ],
+  "products": [
+    {
+      "name": "PK Peppermint 2's x 24 x 50",
+      "slug": "pk-peppermint-2s-x-24-x-50",
+      "sku": "2756",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Aboniki Ointment - 4 X 1 2",
+      "slug": "aboniki-ointment-4-x-1-2",
+      "sku": "0113",
+      "category_slug": "ointment"
+    },
+    {
+      "name": "Abro Organic 6 x 24",
+      "slug": "abro-organic-6-x-24",
+      "sku": "0115",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Activated Charcoal TP 125ml x 12",
+      "slug": "activated-charcoal-tp-125ml-x-12",
+      "sku": "0121",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Active Charcoal Tp 1 x 12",
+      "slug": "active-charcoal-tp-1-x-12",
+      "sku": "1541",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Active Dental flossers Charcoal 1 x 24",
+      "slug": "active-dental-flossers-charcoal-1-x-24",
+      "sku": "2183",
+      "category_slug": "oral-care"
+    },
+    {
+      "name": "Aer Power Card Freshener 1 x 120",
+      "slug": "aer-power-card-freshener-1-x-120",
+      "sku": "3651",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Airwick Refill 6 x 250ml",
+      "slug": "airwick-refill-6-x-250ml",
+      "sku": "3576",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Alpenliebe Orig Sachet 1 x 45",
+      "slug": "alpenliebe-orig-sachet-1-x-45",
+      "sku": "1424",
+      "category_slug": "candy"
+    },
+    {
+      "name": "Always Pad - Maxi Thick Single 16 X 7",
+      "slug": "always-pad-maxi-thick-single-16-x-7",
+      "sku": "2152",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Always Pad - Maxi Thick VP 8 X 14",
+      "slug": "always-pad-maxi-thick-vp-8-x-14",
+      "sku": "2193",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Always Pad Ultra Q5 12 x 16",
+      "slug": "always-pad-ultra-q5-12-x-16",
+      "sku": "3633",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Always Pad Ultra Q5 18 x 26",
+      "slug": "always-pad-ultra-q5-18-x-26",
+      "sku": "3631",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Always Pad Ultra Q5 24 x 8",
+      "slug": "always-pad-ultra-q5-24-x-8",
+      "sku": "3634",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Always Ultra 16 x 8",
+      "slug": "always-ultra-16-x-8",
+      "sku": "1657",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Always ultra thin 8 x16",
+      "slug": "always-ultra-thin-8-x16",
+      "sku": "1703",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Amalfi shower gel 750ml x 16",
+      "slug": "amalfi-shower-gel-750ml-x-16",
+      "sku": "3585",
+      "category_slug": "bath-gel"
+    },
+    {
+      "name": "American Flag 1 x 144",
+      "slug": "american-flag-1-x-144",
+      "sku": "0191",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Aquafresh TP 1 X 12",
+      "slug": "aquafresh-tp-1-x-12",
+      "sku": "2403",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Aquafresh TP Big Teeth 50ml x 12",
+      "slug": "aquafresh-tp-big-teeth-50ml-x-12",
+      "sku": "2782",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Aquafresh TP Milk Teeth 50ml x 12",
+      "slug": "aquafresh-tp-milk-teeth-50ml-x-12",
+      "sku": "2779",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Astonish Glass Cleaner 750ml X 12",
+      "slug": "astonish-glass-cleaner-750ml-x-12",
+      "sku": "0219",
+      "category_slug": "glass-cleaner"
+    },
+    {
+      "name": "Astonish Handwash 600ml x 12",
+      "slug": "astonish-handwash-600ml-x-12",
+      "sku": "2680",
+      "category_slug": "hand-wash"
+    },
+    {
+      "name": "Astonish Starch 750ml x 12",
+      "slug": "astonish-starch-750ml-x-12",
+      "sku": "0230",
+      "category_slug": "spray-starch"
+    },
+    {
+      "name": "Bells Oil 1 x 20 x 12",
+      "slug": "bells-oil-1-x-20-x-12",
+      "sku": "1554",
+      "category_slug": "olive-oil"
+    },
+    {
+      "name": "Bic Disposable Shav Stick - 40 X 5",
+      "slug": "bic-disposable-shav-stick-40-x-5",
+      "sku": "0233",
+      "category_slug": "shaving-stick"
+    },
+    {
+      "name": "Bic Lighter 1 x 12",
+      "slug": "bic-lighter-1-x-12",
+      "sku": "1527",
+      "category_slug": "lighter"
+    },
+    {
+      "name": "Bic Pen NG 1 x 20-Blue",
+      "slug": "bic-pen-ng-1-x-20-blue",
+      "sku": "1739-1",
+      "category_slug": "pens"
+    },
+    {
+      "name": "Biki Shine Black 1 x12 x 20",
+      "slug": "biki-shine-black-1-x12-x-20",
+      "sku": "0238",
+      "category_slug": "polish"
+    },
+    {
+      "name": "Bine 20 Disinfectant 5l x 4",
+      "slug": "bine-20-disinfectant-5l-x-4",
+      "sku": "0243",
+      "category_slug": "disinfectant"
+    },
+    {
+      "name": "Bingo Soft Baby Freshness 1L X 16",
+      "slug": "bingo-soft-baby-freshness-1l-x-16",
+      "sku": "1409",
+      "category_slug": "fabric-softener"
+    },
+    {
+      "name": "Bingo Soft Sea Breeze - 16 X 1L",
+      "slug": "bingo-soft-sea-breeze-16-x-1l",
+      "sku": "0265",
+      "category_slug": "fabric-softener"
+    },
+    {
+      "name": "Bird Camphor 150g x 120",
+      "slug": "bird-camphor-150g-x-120",
+      "sku": "0274",
+      "category_slug": "camphor"
+    },
+    {
+      "name": "Bling Handwash Aqua 500ml x 12",
+      "slug": "bling-handwash-aqua-500ml-x-12",
+      "sku": "1984",
+      "category_slug": "hand-wash"
+    },
+    {
+      "name": "Bling Handwash Shea Cocoa 500ml x 12",
+      "slug": "bling-handwash-shea-cocoa-500ml-x-12",
+      "sku": "1985",
+      "category_slug": "hand-wash"
+    },
+    {
+      "name": "Bling Handwash Vanilla 500ml x 12",
+      "slug": "bling-handwash-vanilla-500ml-x-12",
+      "sku": "2006",
+      "category_slug": "hand-wash"
+    },
+    {
+      "name": "Bling Liquid Soap 5L x 4",
+      "slug": "bling-liquid-soap-5l-x-4",
+      "sku": "2851",
+      "category_slug": "dish-wash"
+    },
+    {
+      "name": "Blue Diamond AF Balls 200g  x 96",
+      "slug": "blue-diamond-af-balls-200g-x-96",
+      "sku": "1412",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Borges Oil Orig 125ml x 24",
+      "slug": "borges-oil-orig-125ml-x-24",
+      "sku": "0286",
+      "category_slug": "olive-oil"
+    },
+    {
+      "name": "Borges Orig 250ml x 12",
+      "slug": "borges-orig-250ml-x-12",
+      "sku": "0291",
+      "category_slug": "olive-oil"
+    },
+    {
+      "name": "Bragg Apple Cider Vinegar 437ml x 12",
+      "slug": "bragg-apple-cider-vinegar-437ml-x-12",
+      "sku": "0297",
+      "category_slug": "apple-cider-vinegar"
+    },
+    {
+      "name": "Breeze Fabric Softener 1L x 12",
+      "slug": "breeze-fabric-softener-1l-x-12",
+      "sku": "1905",
+      "category_slug": "fabric-softener"
+    },
+    {
+      "name": "Breeze Xtra Strong Spray 1 x 36",
+      "slug": "breeze-xtra-strong-spray-1-x-36",
+      "sku": "13761",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Brown Envelope A4 1 x 20",
+      "slug": "brown-envelope-a4-1-x-20",
+      "sku": "0305",
+      "category_slug": "envelope"
+    },
+    {
+      "name": "Brown Envelope A5 1 x 20",
+      "slug": "brown-envelope-a5-1-x-20",
+      "sku": "14021",
+      "category_slug": "envelope"
+    },
+    {
+      "name": "Buffalo Dye Black 1 x 100",
+      "slug": "buffalo-dye-black-1-x-100",
+      "sku": "13733",
+      "category_slug": "polish"
+    },
+    {
+      "name": "Bumble Baby Pocket Wipes 15 pcs 1 x 288",
+      "slug": "bumble-baby-pocket-wipes-15-pcs-1-x-288",
+      "sku": "3637",
+      "category_slug": "baby-wipes"
+    },
+    {
+      "name": "Butterfly Air Refreshener - 12 X 6",
+      "slug": "butterfly-air-refreshener-12-x-6",
+      "sku": "0308",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Camel Aloe Soap 36x175g",
+      "slug": "camel-aloe-soap-36x175g",
+      "sku": "0311",
+      "category_slug": "bar-soap"
+    },
+    {
+      "name": "Camel Anti Liquid 24 x 500ml-Orig",
+      "slug": "camel-anti-liquid-24-x-500ml-orig",
+      "sku": "1350-2",
+      "category_slug": "antiseptic-liquid"
+    },
+    {
+      "name": "Camel Soap Zesty Lime Fresh 36x175g",
+      "slug": "camel-soap-zesty-lime-fresh-36x175g",
+      "sku": "0322",
+      "category_slug": "bar-soap"
+    },
+    {
+      "name": "Candle 1 x 30",
+      "slug": "candle-1-x-30",
+      "sku": "2547",
+      "category_slug": "candle"
+    },
+    {
+      "name": "Cellotape 450yds x 30",
+      "slug": "cellotape-450yds-x-30",
+      "sku": "2189",
+      "category_slug": "adhesive"
+    },
+    {
+      "name": "Cellotape White 300YDS 1 X 36 (copy)",
+      "slug": "cellotape-white-300yds-1-x-36-copy",
+      "sku": "1507",
+      "category_slug": "adhesive"
+    },
+    {
+      "name": "Chocolate Kingsbite - 10 X 100G",
+      "slug": "chocolate-kingsbite-10-x-100g",
+      "sku": "0362",
+      "category_slug": "chocolate"
+    },
+    {
+      "name": "Chocolate Premium 70% Dark 100g x 10",
+      "slug": "chocolate-premium-70-dark-100g-x-10",
+      "sku": "1395",
+      "category_slug": "chocolate"
+    },
+    {
+      "name": "Clipper Reusable Lighter 1 x  10",
+      "slug": "clipper-reusable-lighter-1-x-10",
+      "sku": "1659",
+      "category_slug": "lighter"
+    },
+    {
+      "name": "Colgate Herbal TP 4 x 12 x 230g",
+      "slug": "colgate-herbal-tp-4-x-12-x-230g",
+      "sku": "2191",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Colgate MW Triple Action (TW) 500ml x 12",
+      "slug": "colgate-mw-triple-action-tw-500ml-x-12",
+      "sku": "3630",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Colgate TB DA (2 in 1) 12 x 6",
+      "slug": "colgate-tb-da-2-in-1-12-x-6",
+      "sku": "0394",
+      "category_slug": "tooth-brush"
+    },
+    {
+      "name": "Colgate Tooth Brush Double Action - 10 X 12",
+      "slug": "colgate-tooth-brush-double-action-10-x-12",
+      "sku": "0399",
+      "category_slug": "tooth-brush"
+    },
+    {
+      "name": "Colgate Tooth Paste Triple Action - 6 X 12 X 140g",
+      "slug": "colgate-tooth-paste-triple-action-6-x-12-x-140g",
+      "sku": "0401",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Colgate Toothpaste Herbal - 6 X 12 X 140G",
+      "slug": "colgate-toothpaste-herbal-6-x-12-x-140g",
+      "sku": "2136",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Colgate TP Advance Whitening 75g x 4 x 12",
+      "slug": "colgate-tp-advance-whitening-75g-x-4-x-12",
+      "sku": "1726",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Colgate TP charcoal Gentle clean 120g x 4 x 12",
+      "slug": "colgate-tp-charcoal-gentle-clean-120g-x-4-x-12",
+      "sku": "2077",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Colgate Tp Nat Charcoal - 4 X 12 X 75Ml",
+      "slug": "colgate-tp-nat-charcoal-4-x-12-x-75ml",
+      "sku": "0411",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Colgate TP Optic White 100g x 4 x 12",
+      "slug": "colgate-tp-optic-white-100g-x-4-x-12",
+      "sku": "1734",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Colgate TP Total Clean Mint 75ml x 4 x 12",
+      "slug": "colgate-tp-total-clean-mint-75ml-x-4-x-12",
+      "sku": "0414",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Comfort Softener  20ml 30 x 10-Royal",
+      "slug": "comfort-softener-20ml-30-x-10-royal",
+      "sku": "2706-2",
+      "category_slug": "fabric-softener"
+    },
+    {
+      "name": "Comfort Softener 1.44L x 6",
+      "slug": "comfort-softener-144l-x-6",
+      "sku": "3586",
+      "category_slug": "fabric-softener"
+    },
+    {
+      "name": "Comfort Softener 930ml x 8",
+      "slug": "comfort-softener-930ml-x-8",
+      "sku": "2736",
+      "category_slug": "fabric-softener"
+    },
+    {
+      "name": "Crystal Clear Liq Soap  5l x 4",
+      "slug": "crystal-clear-liq-soap-5l-x-4",
+      "sku": "2157",
+      "category_slug": "dish-wash"
+    },
+    {
+      "name": "Destello Floor Cleaner 1.5L x 12",
+      "slug": "destello-floor-cleaner-15l-x-12",
+      "sku": "2783",
+      "category_slug": "floor-cleaner"
+    },
+    {
+      "name": "Dettol Antiseptic Liq Liquid - 12 X 1L",
+      "slug": "dettol-antiseptic-liq-liquid-12-x-1l",
+      "sku": "1377",
+      "category_slug": "antiseptic-liquid"
+    },
+    {
+      "name": "Dettol Antiseptic Liquid - 6 X 6 X 165ML",
+      "slug": "dettol-antiseptic-liquid-6-x-6-x-165ml",
+      "sku": "1360",
+      "category_slug": "antiseptic-liquid"
+    },
+    {
+      "name": "Dettol Liquid - 12 X 750ML",
+      "slug": "dettol-liquid-12-x-750ml",
+      "sku": "0466",
+      "category_slug": "antiseptic-liquid"
+    },
+    {
+      "name": "Dettol Liquid 500ml x 24",
+      "slug": "dettol-liquid-500ml-x-24",
+      "sku": "2085",
+      "category_slug": "antiseptic-liquid"
+    },
+    {
+      "name": "Dettol Liquid 6 x 6 x 250ml",
+      "slug": "dettol-liquid-6-x-6-x-250ml",
+      "sku": "2084",
+      "category_slug": "antiseptic-liquid"
+    },
+    {
+      "name": "Dettol Soap 105g x 12 x 6-Eventone",
+      "slug": "dettol-soap-105g-x-12-x-6-eventone",
+      "sku": "2722-3",
+      "category_slug": "bar-soap"
+    },
+    {
+      "name": "Deva DW 750ml x 24",
+      "slug": "deva-dw-750ml-x-24",
+      "sku": "2710",
+      "category_slug": "dish-wash"
+    },
+    {
+      "name": "Dorco Pillar blade 1 x 50",
+      "slug": "dorco-pillar-blade-1-x-50",
+      "sku": "0515",
+      "category_slug": "razor"
+    },
+    {
+      "name": "Dove Bath Gel 1L x 12",
+      "slug": "dove-bath-gel-1l-x-12",
+      "sku": "3660",
+      "category_slug": "bath-gel"
+    },
+    {
+      "name": "Dove Bath Gel 500ml x 20",
+      "slug": "dove-bath-gel-500ml-x-20",
+      "sku": "3659",
+      "category_slug": "bath-gel"
+    },
+    {
+      "name": "Dove Bath Gel 750ml  x 16",
+      "slug": "dove-bath-gel-750ml-x-16",
+      "sku": "3657",
+      "category_slug": "bath-gel"
+    },
+    {
+      "name": "Dove bath gel 720ml x 12",
+      "slug": "dove-bath-gel-720ml-x-12",
+      "sku": "2737",
+      "category_slug": "bath-gel"
+    },
+    {
+      "name": "Dove Deo Spray Men & Women 250ml  x 24",
+      "slug": "dove-deo-spray-men-women-250ml-x-24",
+      "sku": "3658",
+      "category_slug": "deo-spray"
+    },
+    {
+      "name": "Easy on 1 x 12-Blue",
+      "slug": "easy-on-1-x-12-blue",
+      "sku": "1561-1",
+      "category_slug": "spray-starch"
+    },
+    {
+      "name": "Easy on 1 x 12-Violet",
+      "slug": "easy-on-1-x-12-violet",
+      "sku": "1561-2",
+      "category_slug": "spray-starch"
+    },
+    {
+      "name": "Eco Air Freshener Spray 400ml x 36",
+      "slug": "eco-air-freshener-spray-400ml-x-36",
+      "sku": "3648",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Energizer - AA2 1 X 200",
+      "slug": "energizer-aa2-1-x-200",
+      "sku": "0563",
+      "category_slug": "batteries"
+    },
+    {
+      "name": "Energizer AA4 1 x 200",
+      "slug": "energizer-aa4-1-x-200",
+      "sku": "0569",
+      "category_slug": "batteries"
+    },
+    {
+      "name": "Energizer AA6 x 8 x 12",
+      "slug": "energizer-aa6-x-8-x-12",
+      "sku": "0571",
+      "category_slug": "batteries"
+    },
+    {
+      "name": "Energizer AAA4 1 x 10 x 20",
+      "slug": "energizer-aaa4-1-x-10-x-20",
+      "sku": "0574",
+      "category_slug": "batteries"
+    },
+    {
+      "name": "Energizer AAA6 x 8 x 12",
+      "slug": "energizer-aaa6-x-8-x-12",
+      "sku": "0575",
+      "category_slug": "batteries"
+    },
+    {
+      "name": "Energizer AAA8 1 x 72",
+      "slug": "energizer-aaa8-1-x-72",
+      "sku": "1518",
+      "category_slug": "batteries"
+    },
+    {
+      "name": "Era Airfresher Spray 400ml x 6 X 6-Pina",
+      "slug": "era-airfresher-spray-400ml-x-6-x-6-pina",
+      "sku": "14281-9",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Era Airfresher Spray 400ml x 6 X 6-Vanilla",
+      "slug": "era-airfresher-spray-400ml-x-6-x-6-vanilla",
+      "sku": "14281-8",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Era Candle Refreshener Vanilla 60ml x 72",
+      "slug": "era-candle-refreshener-vanilla-60ml-x-72",
+      "sku": "3646",
+      "category_slug": "home-fragrance"
+    },
+    {
+      "name": "Era Reed Diffuser 30ml x 48",
+      "slug": "era-reed-diffuser-30ml-x-48",
+      "sku": "1587",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Euthymol Mouthwash 500ml x 6",
+      "slug": "euthymol-mouthwash-500ml-x-6",
+      "sku": "3625",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Fa Roll 50ml x 24",
+      "slug": "fa-roll-50ml-x-24",
+      "sku": "2850",
+      "category_slug": "roll-on"
+    },
+    {
+      "name": "Fatala Coil 1 X 60",
+      "slug": "fatala-coil-1-x-60",
+      "sku": "0584",
+      "category_slug": "insecticide-coil"
+    },
+    {
+      "name": "Fatala Spray 12x 750ml",
+      "slug": "fatala-spray-12x-750ml",
+      "sku": "0585",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Fatala Spray 24 x 300ml",
+      "slug": "fatala-spray-24-x-300ml",
+      "sku": "0586",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Fatala Spray 24x 600ml",
+      "slug": "fatala-spray-24x-600ml",
+      "sku": "2146",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Faultless Spray Starch Heavy 585ml x 12",
+      "slug": "faultless-spray-starch-heavy-585ml-x-12",
+      "sku": "0589",
+      "category_slug": "spray-starch"
+    },
+    {
+      "name": "Febreze spray 185ml x 6",
+      "slug": "febreze-spray-185ml-x-6",
+      "sku": "2830",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Fon T-Roll 1 x 7",
+      "slug": "fon-t-roll-1-x-7",
+      "sku": "0618",
+      "category_slug": "tissue"
+    },
+    {
+      "name": "Freegel Black - 36 X 24",
+      "slug": "freegel-black-36-x-24",
+      "sku": "0620",
+      "category_slug": "candy"
+    },
+    {
+      "name": "Gillette 2  5's 1 x 24",
+      "slug": "gillette-2-5s-1-x-24",
+      "sku": "1604",
+      "category_slug": "razor"
+    },
+    {
+      "name": "Gillette Blue II 5's 1 x 24",
+      "slug": "gillette-blue-ii-5s-1-x-24",
+      "sku": "1603",
+      "category_slug": "razor"
+    },
+    {
+      "name": "Gillette Shaving Gel - 6 X 200ML",
+      "slug": "gillette-shaving-gel-6-x-200ml",
+      "sku": "2705",
+      "category_slug": "shaving-cream"
+    },
+    {
+      "name": "Glade spray Assorted 300ml x 12",
+      "slug": "glade-spray-assorted-300ml-x-12",
+      "sku": "1524",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Glass Shine Cleaner - 12 X 750ML",
+      "slug": "glass-shine-cleaner-12-x-750ml",
+      "sku": "0711",
+      "category_slug": "glass-cleaner"
+    },
+    {
+      "name": "Hapla Laundry Detergent 3L-Lavender",
+      "slug": "hapla-laundry-detergent-3l-lavender",
+      "sku": "1383-3",
+      "category_slug": "detergent"
+    },
+    {
+      "name": "Harpic Liquid  750ml x 12",
+      "slug": "harpic-liquid-750ml-x-12",
+      "sku": "3587",
+      "category_slug": "toilet-cleaner"
+    },
+    {
+      "name": "Harpic Toilet block 1 x 6",
+      "slug": "harpic-toilet-block-1-x-6",
+      "sku": "2831",
+      "category_slug": "toilet-cleaner"
+    },
+    {
+      "name": "Holy Insect. Spray 750ml x 24",
+      "slug": "holy-insect-spray-750ml-x-24",
+      "sku": "2188",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Holy Insecticide Spray 400ml x 24",
+      "slug": "holy-insecticide-spray-400ml-x-24",
+      "sku": "0762",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Huggies Wipes 1 x 10",
+      "slug": "huggies-wipes-1-x-10",
+      "sku": "2156",
+      "category_slug": "baby-wipes"
+    },
+    {
+      "name": "Ikeda Liquid Freshener 1 x 36",
+      "slug": "ikeda-liquid-freshener-1-x-36",
+      "sku": "2768",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Imperial Leather Soap Classic 36x200g",
+      "slug": "imperial-leather-soap-classic-36x200g",
+      "sku": "0779",
+      "category_slug": "bar-soap"
+    },
+    {
+      "name": "Initial Refreshener 90ml x 30",
+      "slug": "initial-refreshener-90ml-x-30",
+      "sku": "3611",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Irish Bar Soap - 18 X 3-Icy Blast",
+      "slug": "irish-bar-soap-18-x-3-icy-blast",
+      "sku": "1365-2",
+      "category_slug": "bar-soap"
+    },
+    {
+      "name": "Irish Bar Soap - 18 X 3-Original",
+      "slug": "irish-bar-soap-18-x-3-original",
+      "sku": "1365-3",
+      "category_slug": "bar-soap"
+    },
+    {
+      "name": "Irish Bath gel-Aloe 591ml x 4",
+      "slug": "irish-bath-gel-aloe-591ml-x-4",
+      "sku": "1366-1",
+      "category_slug": "bath-gel"
+    },
+    {
+      "name": "Irish Bath gel-Moist Blast 591ml x 4",
+      "slug": "irish-bath-gel-moist-blast-591ml-x-4",
+      "sku": "1366-2",
+      "category_slug": "bath-gel"
+    },
+    {
+      "name": "Irish Bath gel-Org 591ml x 4",
+      "slug": "irish-bath-gel-org-591ml-x-4",
+      "sku": "1366-3",
+      "category_slug": "bath-gel"
+    },
+    {
+      "name": "Kel Charcoal TP 150g x 48",
+      "slug": "kel-charcoal-tp-150g-x-48",
+      "sku": "13262",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Kel TP Charcoal 80g x 48",
+      "slug": "kel-tp-charcoal-80g-x-48",
+      "sku": "2017",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Killit Spray - 12 X 750ML",
+      "slug": "killit-spray-12-x-750ml",
+      "sku": "0823",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Killit Spray - 24 X 400ML",
+      "slug": "killit-spray-24-x-400ml",
+      "sku": "0824",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Kleen Pillar Blade 1 x 80",
+      "slug": "kleen-pillar-blade-1-x-80",
+      "sku": "0840",
+      "category_slug": "razor"
+    },
+    {
+      "name": "Listerine Mouth Wash  6 X 250ML-Cool mint",
+      "slug": "listerine-mouth-wash-6-x-250ml-cool-mint",
+      "sku": "1341-3",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Listerine Mouth Wash  6 X 250ML-Freshburst",
+      "slug": "listerine-mouth-wash-6-x-250ml-freshburst",
+      "sku": "1341-1",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Listerine Mouth Wash 6 X 500ML-Cool mint",
+      "slug": "listerine-mouth-wash-6-x-500ml-cool-mint",
+      "sku": "1339-3",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Listerine Mouth Wash 6 X 500ML-Fresh Burst",
+      "slug": "listerine-mouth-wash-6-x-500ml-fresh-burst",
+      "sku": "1339-1",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Listerine Mouthwash Total Care 250ml x 6",
+      "slug": "listerine-mouthwash-total-care-250ml-x-6",
+      "sku": "2854",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Listerine Mouthwash Total Care 500ml x 6",
+      "slug": "listerine-mouthwash-total-care-500ml-x-6",
+      "sku": "2824",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Listerine Reach TB 1 x 6",
+      "slug": "listerine-reach-tb-1-x-6",
+      "sku": "1392",
+      "category_slug": "tooth-brush"
+    },
+    {
+      "name": "Little Joe Car Refreshener 1 x 48",
+      "slug": "little-joe-car-refreshener-1-x-48",
+      "sku": "2752",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Longrich TP 200g x 60",
+      "slug": "longrich-tp-200g-x-60",
+      "sku": "0871",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Lord Blade - 100 X 20",
+      "slug": "lord-blade-100-x-20",
+      "sku": "0872",
+      "category_slug": "razor"
+    },
+    {
+      "name": "Lu Blue 1s x 12",
+      "slug": "lu-blue-1s-x-12",
+      "sku": "0875",
+      "category_slug": "toilet-cleaner"
+    },
+    {
+      "name": "Lude Polish Black 1 x 30",
+      "slug": "lude-polish-black-1-x-30",
+      "sku": "0876",
+      "category_slug": "polish"
+    },
+    {
+      "name": "Madarzone 500ml x 12",
+      "slug": "madarzone-500ml-x-12",
+      "sku": "0886",
+      "category_slug": "bleach"
+    },
+    {
+      "name": "Medi Soft Repellent Sachet - 1 X 12",
+      "slug": "medi-soft-repellent-sachet-1-x-12",
+      "sku": "0895",
+      "category_slug": "insect-repellent"
+    },
+    {
+      "name": "Medisoft Antiseptic Bar Soap - 12 X 6",
+      "slug": "medisoft-antiseptic-bar-soap-12-x-6",
+      "sku": "0896",
+      "category_slug": "bar-soap"
+    },
+    {
+      "name": "Medisoft Repellent Bottle Green 1 x 12",
+      "slug": "medisoft-repellent-bottle-green-1-x-12",
+      "sku": "0897",
+      "category_slug": "insect-repellent"
+    },
+    {
+      "name": "Mentos FA Stick 1 x 12",
+      "slug": "mentos-fa-stick-1-x-12",
+      "sku": "2787",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Mentos Fresh Action Sachet 1 X 24",
+      "slug": "mentos-fresh-action-sachet-1-x-24",
+      "sku": "0900",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Mentos Gum Jar XL 1 X 6-Fresh mint",
+      "slug": "mentos-gum-jar-xl-1-x-6-fresh-mint",
+      "sku": "1544-1",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Mentos Gum Jar XL 1 X 6-Strawberry",
+      "slug": "mentos-gum-jar-xl-1-x-6-strawberry",
+      "sku": "1544-2",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Mentos Ice Gum 24 X 12-Black",
+      "slug": "mentos-ice-gum-24-x-12-black",
+      "sku": "1344-2",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Mentos Ice Gum 24 X 12-Green",
+      "slug": "mentos-ice-gum-24-x-12-green",
+      "sku": "1344-3",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Mentos Ice Gum 24 X 12-Orange",
+      "slug": "mentos-ice-gum-24-x-12-orange",
+      "sku": "1344-4",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Mentos Ice Gum 24 X 12",
+      "slug": "mentos-ice-gum-24-x-12",
+      "sku": "134455-5",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Mentos Toffee Roll Fruit - 8 X 24",
+      "slug": "mentos-toffee-roll-fruit-8-x-24",
+      "sku": "0926",
+      "category_slug": "candy"
+    },
+    {
+      "name": "Mentos Toffee Roll Mint - 8 X 24",
+      "slug": "mentos-toffee-roll-mint-8-x-24",
+      "sku": "0927",
+      "category_slug": "candy"
+    },
+    {
+      "name": "Miki Liquid Black 1 x 12",
+      "slug": "miki-liquid-black-1-x-12",
+      "sku": "0930",
+      "category_slug": "polish"
+    },
+    {
+      "name": "Morning Fresh Dish Wash Original - 450ml X 18",
+      "slug": "morning-fresh-dish-wash-original-450ml-x-18",
+      "sku": "0972",
+      "category_slug": "dish-wash"
+    },
+    {
+      "name": "Morning Fresh Dish Wash zesty - 450ml X 18",
+      "slug": "morning-fresh-dish-wash-zesty-450ml-x-18",
+      "sku": "0973",
+      "category_slug": "dish-wash"
+    },
+    {
+      "name": "My-Melk Gum Mint 1 x 24",
+      "slug": "my-melk-gum-mint-1-x-24",
+      "sku": "1935",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Nataraj Pencil 1 x 20 x 12",
+      "slug": "nataraj-pencil-1-x-20-x-12",
+      "sku": "1000",
+      "category_slug": "pens"
+    },
+    {
+      "name": "Nivea Deo Spray 200ml x 12-B/w Fml",
+      "slug": "nivea-deo-spray-200ml-x-12-b-w-fml",
+      "sku": "2734-4",
+      "category_slug": "roll-on"
+    },
+    {
+      "name": "Nivea Lotion 400ml x 12-Nourishing Cocoa",
+      "slug": "nivea-lotion-400ml-x-12-nourishing-cocoa",
+      "sku": "1667-1",
+      "category_slug": "body-lotion"
+    },
+    {
+      "name": "Nivea Lotion 400ml x 12-Perfect & Radiant",
+      "slug": "nivea-lotion-400ml-x-12-perfect-radiant",
+      "sku": "1667-2",
+      "category_slug": "body-lotion"
+    },
+    {
+      "name": "Nivea Lotion Evenglow/Vit C 400ml x 12",
+      "slug": "nivea-lotion-evenglow-vit-c-400ml-x-12",
+      "sku": "3618",
+      "category_slug": "body-lotion"
+    },
+    {
+      "name": "Nivea Lotion Q10 Firming 400ml x 12",
+      "slug": "nivea-lotion-q10-firming-400ml-x-12",
+      "sku": "1706",
+      "category_slug": "body-lotion"
+    },
+    {
+      "name": "Nivea Lotion Rich Nourishing 400ml  x 12",
+      "slug": "nivea-lotion-rich-nourishing-400ml-x-12",
+      "sku": "1707",
+      "category_slug": "body-lotion"
+    },
+    {
+      "name": "Nivea Lotion Advance Care/Avocado 400ml x 12",
+      "slug": "nivea-lotion-advance-care-avocado-400ml-x-12",
+      "sku": "3619",
+      "category_slug": "body-lotion"
+    },
+    {
+      "name": "Nivea Roll On NG  50ML X 30",
+      "slug": "nivea-roll-on-ng-50ml-x-30",
+      "sku": "2803-9",
+      "category_slug": "roll-on"
+    },
+    {
+      "name": "Nivea Roll On NG  50ML X 30-Fresh energy",
+      "slug": "nivea-roll-on-ng-50ml-x-30-fresh-energy",
+      "sku": "2803-3",
+      "category_slug": "roll-on"
+    },
+    {
+      "name": "Note 1 book 1 x 20 x 10",
+      "slug": "note-1-book-1-x-20-x-10",
+      "sku": "2793",
+      "category_slug": "exercise-book"
+    },
+    {
+      "name": "Odomos Mosquito Repellent 50g 8 x 12",
+      "slug": "odomos-mosquito-repellent-50g-8-x-12",
+      "sku": "2693",
+      "category_slug": "insecticide-coil"
+    },
+    {
+      "name": "Oral B Mouthwash 3D Lux 500ml x 6",
+      "slug": "oral-b-mouthwash-3d-lux-500ml-x-6",
+      "sku": "3582",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Oral B Mouthwash Arctic Mint 250ml × 6",
+      "slug": "oral-b-mouthwash-arctic-mint-250ml-6",
+      "sku": "3581",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Oral B Toothpaste Extra - 6 X 6 X 130g",
+      "slug": "oral-b-toothpaste-extra-6-x-6-x-130g",
+      "sku": "1030",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Oral B TP ARP 93g x 4 x 6",
+      "slug": "oral-b-tp-arp-93g-x-4-x-6",
+      "sku": "2809",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Oro Glass Cleaner - 12 X 750ML",
+      "slug": "oro-glass-cleaner-12-x-750ml",
+      "sku": "1046",
+      "category_slug": "glass-cleaner"
+    },
+    {
+      "name": "Oro Insecticide Spray 24 x 400ML",
+      "slug": "oro-insecticide-spray-24-x-400ml",
+      "sku": "1051",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Oro insecticide spray 750ml x 24",
+      "slug": "oro-insecticide-spray-750ml-x-24",
+      "sku": "2808",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Out spray 300ml x 24",
+      "slug": "out-spray-300ml-x-24",
+      "sku": "1716",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Out spray 400ml x 24",
+      "slug": "out-spray-400ml-x-24",
+      "sku": "2554",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Palc Liq Black 75ml x 12 x 12",
+      "slug": "palc-liq-black-75ml-x-12-x-12",
+      "sku": "1067",
+      "category_slug": "polish"
+    },
+    {
+      "name": "Pegs 1 x 36",
+      "slug": "pegs-1-x-36",
+      "sku": "1099",
+      "category_slug": "pegs"
+    },
+    {
+      "name": "Pepsodent TB 1 x 24",
+      "slug": "pepsodent-tb-1-x-24",
+      "sku": "2555",
+      "category_slug": "tooth-brush"
+    },
+    {
+      "name": "Pepsodent Toothpaste Regular - 175G X 6 X 12",
+      "slug": "pepsodent-toothpaste-regular-175g-x-6-x-12",
+      "sku": "1109",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Pepsodent TP Herb S & M 130g x 12 x 6",
+      "slug": "pepsodent-tp-herb-s-m-130g-x-12-x-6",
+      "sku": "1618",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Pepsodent TP Trip Charcoal Lemon 130g x 12 x 6",
+      "slug": "pepsodent-tp-trip-charcoal-lemon-130g-x-12-x-6",
+      "sku": "1112",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Permanent Marker Gold 1 x 80",
+      "slug": "permanent-marker-gold-1-x-80",
+      "sku": "1510",
+      "category_slug": "stationery"
+    },
+    {
+      "name": "PK Juicy fruit 10's x 8 x 30",
+      "slug": "pk-juicy-fruit-10s-x-8-x-30",
+      "sku": "2757",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "PK Juicy fruit 4's x 36",
+      "slug": "pk-juicy-fruit-4s-x-36",
+      "sku": "2758",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Plantana Body Cream 500ml x 12-New",
+      "slug": "plantana-body-cream-500ml-x-12-new",
+      "sku": "2594",
+      "category_slug": "body-lotion"
+    },
+    {
+      "name": "Plantana Face Cream Aloe 50g x 12",
+      "slug": "plantana-face-cream-aloe-50g-x-12",
+      "sku": "1127",
+      "category_slug": "face-cream"
+    },
+    {
+      "name": "Pledge Spray 250ml x 6",
+      "slug": "pledge-spray-250ml-x-6",
+      "sku": "1133",
+      "category_slug": "furniture-spray"
+    },
+    {
+      "name": "Pro 500 Thin Blade 1 X 80",
+      "slug": "pro-500-thin-blade-1-x-80",
+      "sku": "1143",
+      "category_slug": "razor"
+    },
+    {
+      "name": "Propa Baby Wipes Mini 1 x 48",
+      "slug": "propa-baby-wipes-mini-1-x-48",
+      "sku": "2788",
+      "category_slug": "baby-wipes"
+    },
+    {
+      "name": "Propa Panty Liner 1 x 24",
+      "slug": "propa-panty-liner-1-x-24",
+      "sku": "1402",
+      "category_slug": "panty-liner"
+    },
+    {
+      "name": "Propa Sanitary Pad Blue 1 x 24",
+      "slug": "propa-sanitary-pad-blue-1-x-24",
+      "sku": "1148",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Propa Sanitary Pad Voilet 1 x 24",
+      "slug": "propa-sanitary-pad-voilet-1-x-24",
+      "sku": "1151",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Propa TB Exp 1 1 x 10",
+      "slug": "propa-tb-exp-1-1-x-10",
+      "sku": "1152",
+      "category_slug": "tooth-brush"
+    },
+    {
+      "name": "Propa TB Exp 2 1 x 10",
+      "slug": "propa-tb-exp-2-1-x-10",
+      "sku": "1153",
+      "category_slug": "tooth-brush"
+    },
+    {
+      "name": "Propa TB Exp 3 1 x 10",
+      "slug": "propa-tb-exp-3-1-x-10",
+      "sku": "1154",
+      "category_slug": "tooth-brush"
+    },
+    {
+      "name": "Raid Spray 500ml x 12",
+      "slug": "raid-spray-500ml-x-12",
+      "sku": "1164",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Raid Spray TKP - 24 X 300ML",
+      "slug": "raid-spray-tkp-24-x-300ml",
+      "sku": "1166",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Reach TB 2in1 1 X 5",
+      "slug": "reach-tb-2in1-1-x-5",
+      "sku": "2182",
+      "category_slug": "tooth-brush"
+    },
+    {
+      "name": "Read A Dream Spray - 24 X 400ML",
+      "slug": "read-a-dream-spray-24-x-400ml",
+      "sku": "1168",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Read A Dream Spray - 24 X 600ML",
+      "slug": "read-a-dream-spray-24-x-600ml",
+      "sku": "1169",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Reflex Mouthwash Gum Care 225ml x 36",
+      "slug": "reflex-mouthwash-gum-care-225ml-x-36",
+      "sku": "1171",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Reflex Mouthwash Multi Protect 225ml x 36",
+      "slug": "reflex-mouthwash-multi-protect-225ml-x-36",
+      "sku": "1172",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Reflex Mouthwash Regular 225ml x 36",
+      "slug": "reflex-mouthwash-regular-225ml-x-36",
+      "sku": "1173",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Renzo Liquid Lemon 200ml x 24",
+      "slug": "renzo-liquid-lemon-200ml-x-24",
+      "sku": "1177",
+      "category_slug": "dish-wash"
+    },
+    {
+      "name": "Renzo Liquid Lemon 200ml x 24",
+      "slug": "renzo-liquid-lemon-200ml-x-24-2",
+      "sku": "2060",
+      "category_slug": "dish-wash"
+    },
+    {
+      "name": "Renzo Liquid Lemon 400ml x 12",
+      "slug": "renzo-liquid-lemon-400ml-x-12",
+      "sku": "1178",
+      "category_slug": "dish-wash"
+    },
+    {
+      "name": "Robb Ointmebt Jar - 18 X 12",
+      "slug": "robb-ointmebt-jar-18-x-12",
+      "sku": "1185",
+      "category_slug": "ointment"
+    },
+    {
+      "name": "Robb Ointment 3.5ml x 20",
+      "slug": "robb-ointment-35ml-x-20",
+      "sku": "1186",
+      "category_slug": "ointment"
+    },
+    {
+      "name": "Roma spray 300ml x 24",
+      "slug": "roma-spray-300ml-x-24",
+      "sku": "2018",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Royal Akono  22g x 10-Ginger",
+      "slug": "royal-akono-22g-x-10-ginger",
+      "sku": "1368-1",
+      "category_slug": "candy"
+    },
+    {
+      "name": "Royale Powder - 12 X 400G",
+      "slug": "royale-powder-12-x-400g",
+      "sku": "1205",
+      "category_slug": "chocolate"
+    },
+    {
+      "name": "Sabroso Oil - 24 X 250ML",
+      "slug": "sabroso-oil-24-x-250ml",
+      "sku": "1209",
+      "category_slug": "olive-oil"
+    },
+    {
+      "name": "Sabroso Oil P 100ml x 40",
+      "slug": "sabroso-oil-p-100ml-x-40",
+      "sku": "1210",
+      "category_slug": "olive-oil"
+    },
+    {
+      "name": "Safelife Brown Sugar 20 x 750g",
+      "slug": "safelife-brown-sugar-20-x-750g",
+      "sku": "1212",
+      "category_slug": "brown-sugar"
+    },
+    {
+      "name": "Saikirpa Camphor 150g x 120",
+      "slug": "saikirpa-camphor-150g-x-120",
+      "sku": "1215",
+      "category_slug": "camphor"
+    },
+    {
+      "name": "Saikirpa Camphor Colored 150g x 120",
+      "slug": "saikirpa-camphor-colored-150g-x-120",
+      "sku": "1216",
+      "category_slug": "camphor"
+    },
+    {
+      "name": "Saikirpa Camphor Colored 300g x 60",
+      "slug": "saikirpa-camphor-colored-300g-x-60",
+      "sku": "1217",
+      "category_slug": "camphor"
+    },
+    {
+      "name": "Saikirpa Camphor White 300g x 60",
+      "slug": "saikirpa-camphor-white-300g-x-60",
+      "sku": "13612",
+      "category_slug": "camphor"
+    },
+    {
+      "name": "Sairo Bath gel 1250ml × 10",
+      "slug": "sairo-bath-gel-1250ml-10",
+      "sku": "2161",
+      "category_slug": "bath-gel"
+    },
+    {
+      "name": "Sairo Bath gel 600ml x 12",
+      "slug": "sairo-bath-gel-600ml-x-12",
+      "sku": "3589",
+      "category_slug": "bath-gel"
+    },
+    {
+      "name": "Sairo Handwash 500ml x 12",
+      "slug": "sairo-handwash-500ml-x-12",
+      "sku": "3643",
+      "category_slug": "hand-wash"
+    },
+    {
+      "name": "Sairo Mouthwash 500ml  x 16",
+      "slug": "sairo-mouthwash-500ml-x-16",
+      "sku": "3642",
+      "category_slug": "mouth-wash"
+    },
+    {
+      "name": "Sasso Insecticide Spray - 12 X 750ML",
+      "slug": "sasso-insecticide-spray-12-x-750ml",
+      "sku": "1218",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Sasso Mosquito Coil - 60 X 10",
+      "slug": "sasso-mosquito-coil-60-x-10",
+      "sku": "1219",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Sasso Spray - 24 X 300ML",
+      "slug": "sasso-spray-24-x-300ml",
+      "sku": "1220",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Satnam Repellent Square 1 x 120",
+      "slug": "satnam-repellent-square-1-x-120",
+      "sku": "1224",
+      "category_slug": "insect-repellent"
+    },
+    {
+      "name": "Sensodnye 1 x 12",
+      "slug": "sensodnye-1-x-12",
+      "sku": "2158",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Scissors b/s 1 x 50",
+      "slug": "scissors-b-s-1-x-50",
+      "sku": "149701",
+      "category_slug": "stationery"
+    },
+    {
+      "name": "Scissors s/s 1 x 50",
+      "slug": "scissors-s-s-1-x-50",
+      "sku": "1496",
+      "category_slug": "stationery"
+    },
+    {
+      "name": "Secure pad Extra 20 x 12",
+      "slug": "secure-pad-extra-20-x-12",
+      "sku": "2839",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Secure pad Long 16 x 12",
+      "slug": "secure-pad-long-16-x-12",
+      "sku": "2840",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Smart Look Starch Spray - 12 X 750ML",
+      "slug": "smart-look-starch-spray-12-x-750ml",
+      "sku": "1252",
+      "category_slug": "spray-starch"
+    },
+    {
+      "name": "Smokers  TB 1 X 60",
+      "slug": "smokers-tb-1-x-60",
+      "sku": "1540",
+      "category_slug": "tooth-brush"
+    },
+    {
+      "name": "Sniper Dvp 1 x 96",
+      "slug": "sniper-dvp-1-x-96",
+      "sku": "1253",
+      "category_slug": "insecticide-spray"
+    },
+    {
+      "name": "Softcare Wipes  80's X 12",
+      "slug": "softcare-wipes-80s-x-12",
+      "sku": "1598",
+      "category_slug": "baby-wipes"
+    },
+    {
+      "name": "Softy Softener Cotton 1L X 12-Lavender",
+      "slug": "softy-softener-cotton-1l-x-12-lavender",
+      "sku": "1597-3",
+      "category_slug": "fabric-softener"
+    },
+    {
+      "name": "Softy Softener Cotton 1L X 12-Spring",
+      "slug": "softy-softener-cotton-1l-x-12-spring",
+      "sku": "1597-2",
+      "category_slug": "fabric-softener"
+    },
+    {
+      "name": "Softy Softener Cotton 1L X 12-Tropical",
+      "slug": "softy-softener-cotton-1l-x-12-tropical",
+      "sku": "1597-4",
+      "category_slug": "fabric-softener"
+    },
+    {
+      "name": "Soldier Meth. Oil 40ml x 48",
+      "slug": "soldier-meth-oil-40ml-x-48",
+      "sku": "1881",
+      "category_slug": "olive-oil"
+    },
+    {
+      "name": "Speed Softener 1440ml x 6",
+      "slug": "speed-softener-1440ml-x-6",
+      "sku": "1673-1",
+      "category_slug": "bath-gel"
+    },
+    {
+      "name": "Speed Softener 1440ml x 6",
+      "slug": "speed-softener-1440ml-x-6-2",
+      "sku": "1673-3",
+      "category_slug": "bath-gel"
+    },
+    {
+      "name": "Star Fresh Gel Card 1 x 12",
+      "slug": "star-fresh-gel-card-1-x-12",
+      "sku": "13272",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Sunlight Dish Wash Liquid Green 750ml x 15",
+      "slug": "sunlight-dish-wash-liquid-green-750ml-x-15",
+      "sku": "1273",
+      "category_slug": "dish-wash"
+    },
+    {
+      "name": "Supermax blade Yellow 1 x 50",
+      "slug": "supermax-blade-yellow-1-x-50",
+      "sku": "1654",
+      "category_slug": "razor"
+    },
+    {
+      "name": "Swiss AF Spray",
+      "slug": "swiss-af-spray",
+      "sku": "1333-5",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Swiss AF Spray 500ml x 12",
+      "slug": "swiss-af-spray-500ml-x-12",
+      "sku": "13345",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Tea tree Handwash 500ml x 12",
+      "slug": "tea-tree-handwash-500ml-x-12",
+      "sku": "2822",
+      "category_slug": "hand-wash"
+    },
+    {
+      "name": "Tender Toilet Roll - 1 x 50",
+      "slug": "tender-toilet-roll-1-x-50",
+      "sku": "1317",
+      "category_slug": "tissue"
+    },
+    {
+      "name": "Tetmosol Soap 120g x 8",
+      "slug": "tetmosol-soap-120g-x-8",
+      "sku": "1973",
+      "category_slug": "bar-soap"
+    },
+    {
+      "name": "Tetmosol Soap 75g x 12",
+      "slug": "tetmosol-soap-75g-x-12",
+      "sku": "1972",
+      "category_slug": "bar-soap"
+    },
+    {
+      "name": "Tetmosol Soap Baby 75g x 12",
+      "slug": "tetmosol-soap-baby-75g-x-12",
+      "sku": "2769",
+      "category_slug": "bar-soap"
+    },
+    {
+      "name": "Tiger Head Battery 1 x 24",
+      "slug": "tiger-head-battery-1-x-24",
+      "sku": "1386",
+      "category_slug": "batteries"
+    },
+    {
+      "name": "Tom Tom Toffee - 36 X 30",
+      "slug": "tom-tom-toffee-36-x-30",
+      "sku": "1320",
+      "category_slug": "candy"
+    },
+    {
+      "name": "Tongue Scrapper 24 x 12",
+      "slug": "tongue-scrapper-24-x-12",
+      "sku": "1970",
+      "category_slug": "oral-care"
+    },
+    {
+      "name": "Trident Gum  12's 1 x 12-Pineapple",
+      "slug": "trident-gum-12s-1-x-12-pineapple",
+      "sku": "1990-7",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Trident Gum  12's 1 x 12-Trp",
+      "slug": "trident-gum-12s-1-x-12-trp",
+      "sku": "1990-1",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Truesmile TP Kids WB 75ml x 12",
+      "slug": "truesmile-tp-kids-wb-75ml-x-12",
+      "sku": "2682",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Truesmile TP n TB 1 x 12",
+      "slug": "truesmile-tp-n-tb-1-x-12",
+      "sku": "3592",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Veeryklin TP Charcoal 100g x 12 x 6",
+      "slug": "veeryklin-tp-charcoal-100g-x-12-x-6",
+      "sku": "2082",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Veyes Diffuser 130ml x 30",
+      "slug": "veyes-diffuser-130ml-x-30",
+      "sku": "2418",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Vim powder 750ml x 8",
+      "slug": "vim-powder-750ml-x-8",
+      "sku": "2640",
+      "category_slug": "abrasive"
+    },
+    {
+      "name": "WC Net 34g x 12 x 4",
+      "slug": "wc-net-34g-x-12-x-4",
+      "sku": "1330-3",
+      "category_slug": "toilet-cleaner"
+    },
+    {
+      "name": "WC Net Blue 34g x 4 x 12",
+      "slug": "wc-net-blue-34g-x-4-x-12",
+      "sku": "1346",
+      "category_slug": "toilet-cleaner"
+    },
+    {
+      "name": "WC Net Green 34g x 4 x 12",
+      "slug": "wc-net-green-34g-x-4-x-12",
+      "sku": "1347",
+      "category_slug": "toilet-cleaner"
+    },
+    {
+      "name": "WC Net T - Block Style  1 x 12-Blue",
+      "slug": "wc-net-t-block-style-1-x-12-blue",
+      "sku": "1627-2",
+      "category_slug": "toilet-cleaner"
+    },
+    {
+      "name": "WC Net T - Block Style  1 x 12-Pink",
+      "slug": "wc-net-t-block-style-1-x-12-pink",
+      "sku": "1627-1",
+      "category_slug": "toilet-cleaner"
+    },
+    {
+      "name": "WC Net Violet 34g x 4 x 12",
+      "slug": "wc-net-violet-34g-x-4-x-12",
+      "sku": "1348",
+      "category_slug": "toilet-cleaner"
+    },
+    {
+      "name": "White Envelope 1 x 20",
+      "slug": "white-envelope-1-x-20",
+      "sku": "2083",
+      "category_slug": "envelope"
+    },
+    {
+      "name": "White Up TP Turmeric 100g  x 48",
+      "slug": "white-up-tp-turmeric-100g-x-48",
+      "sku": "2853",
+      "category_slug": "tooth-paste"
+    },
+    {
+      "name": "Wild Wolf Liq Polish Black 1 x 72",
+      "slug": "wild-wolf-liq-polish-black-1-x-72",
+      "sku": "13511",
+      "category_slug": "polish"
+    },
+    {
+      "name": "Wind Air Freshener 200g x 72",
+      "slug": "wind-air-freshener-200g-x-72",
+      "sku": "3605",
+      "category_slug": "air-freshener"
+    },
+    {
+      "name": "Xylitol Gum B/S 1 x 8 x 6",
+      "slug": "xylitol-gum-b-s-1-x-8-x-6",
+      "sku": "2791",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Xylitol Gum S/S 1 x 6 x 12",
+      "slug": "xylitol-gum-s-s-1-x-6-x-12",
+      "sku": "2792",
+      "category_slug": "chewing-gum"
+    },
+    {
+      "name": "Yazz Baby Wipes - 12 X 80",
+      "slug": "yazz-baby-wipes-12-x-80",
+      "sku": "2078",
+      "category_slug": "baby-wipes"
+    },
+    {
+      "name": "Yazz Kids TB 1 X 12",
+      "slug": "yazz-kids-tb-1-x-12",
+      "sku": "1652",
+      "category_slug": "tooth-brush"
+    },
+    {
+      "name": "Yazz Panty liner 1 x 48",
+      "slug": "yazz-panty-liner-1-x-48",
+      "sku": "2061",
+      "category_slug": "panty-liner"
+    },
+    {
+      "name": "Yazz Sanitary Pad - Blue 1 x 24",
+      "slug": "yazz-sanitary-pad-blue-1-x-24",
+      "sku": "1361",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Yazz Sanitary Pad - Green 1 x 24",
+      "slug": "yazz-sanitary-pad-green-1-x-24",
+      "sku": "2618",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Yazz Sanitary Pad - Pink 1 x 24",
+      "slug": "yazz-sanitary-pad-pink-1-x-24",
+      "sku": "1363",
+      "category_slug": "sanitary-pads"
+    },
+    {
+      "name": "Yazz TB  Duke 1 x 12",
+      "slug": "yazz-tb-duke-1-x-12",
+      "sku": "1366",
+      "category_slug": "tooth-brush"
+    },
+    {
+      "name": "Yazz TB Duchess 1 x 12",
+      "slug": "yazz-tb-duchess-1-x-12",
+      "sku": "14481",
+      "category_slug": "tooth-brush"
+    },
+    {
+      "name": "Yes Hanger 1 x 24",
+      "slug": "yes-hanger-1-x-24",
+      "sku": "1373",
+      "category_slug": "hanger"
+    },
+    {
+      "name": "Yes Perfume 50ml x 96",
+      "slug": "yes-perfume-50ml-x-96",
+      "sku": "1601",
+      "category_slug": "perfume"
+    },
+    {
+      "name": "Zabata Lighter 1 x 20",
+      "slug": "zabata-lighter-1-x-20",
+      "sku": "2846",
+      "category_slug": "lighter"
+    },
+    {
+      "name": "Zoflora Disinfectant 500ml x  12",
+      "slug": "zoflora-disinfectant-500ml-x-12",
+      "sku": "13742",
+      "category_slug": "disinfectant"
+    },
+    {
+      "name": "Zoflora Disinfectant Assorted 120ml x 12",
+      "slug": "zoflora-disinfectant-assorted-120ml-x-12",
+      "sku": "13751",
+      "category_slug": "disinfectant"
+    }
+  ]
+}

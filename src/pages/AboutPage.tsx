@@ -4,8 +4,11 @@ import type { CmsPage } from '@/types/index';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useModules } from '@/contexts/ModulesContext';
+import Seo from '@/components/common/Seo';
+import TeamSection from '@/components/about/TeamSection';
 import {
-  Users, Target, Eye, Star, Award, Truck, ShieldCheck,
+  Target, Eye, Star, Award, Truck, ShieldCheck,
   Heart, Leaf, Gem, ArrowRight, CheckCircle2, Phone, Mail, MapPin,
 } from 'lucide-react';
 
@@ -56,6 +59,7 @@ const STATIC: AboutContent = {
 
 // ══════════════════════════════════════════════════════════════════════════════
 export default function AboutPage() {
+  const { isEnabled } = useModules();
   const [page, setPage] = useState<CmsPage | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -78,6 +82,7 @@ export default function AboutPage() {
 
   return (
     <div className="pb-20">
+      <Seo path="/about" title="About Us — KW Enterprise" description="Learn about KW Enterprise, our mission, values and the team behind Ghana’s trusted FMCG distribution business." />
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section className="relative bg-gradient-to-br from-amber-700 via-amber-800 to-amber-900 text-white overflow-hidden">
@@ -224,39 +229,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── Team ─────────────────────────────────────────────────────────── */}
-      <section className="bg-amber-50 py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <span className="text-amber-600 text-sm font-medium uppercase tracking-widest">The People</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mt-2 text-balance">Meet Our Team</h2>
-            <p className="text-gray-500 mt-3 max-w-lg mx-auto text-pretty">
-              Passionate individuals dedicated to making every gift experience unforgettable.
-            </p>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(c.team ?? []).map((member, i) => (
-              <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow">
-                <div className="aspect-square bg-amber-100 overflow-hidden">
-                  {member.image_url
-                    ? <img src={member.image_url} alt={member.name} className="w-full h-full object-cover" />
-                    : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-100 to-amber-200">
-                        <Users className="w-16 h-16 text-amber-400" />
-                      </div>
-                    )
-                  }
-                </div>
-                <div className="p-5 flex-1">
-                  <h3 className="font-semibold text-gray-900 text-balance">{member.name}</h3>
-                  <p className="text-xs text-amber-600 font-medium mt-0.5 mb-2">{member.role}</p>
-                  {member.bio && <p className="text-xs text-gray-500 leading-relaxed text-pretty">{member.bio}</p>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── Team (admin-managed) ─────────────────────────────────────────── */}
+      {isEnabled('team') && <TeamSection />}
 
       {/* ── Contact strip ────────────────────────────────────────────────── */}
       <section className="container mx-auto px-4 py-16">

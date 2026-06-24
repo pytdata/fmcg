@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getCmsPage } from '@/services/store';
 import { api } from '@/lib/api';
+import Seo from '@/components/common/Seo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -129,6 +130,7 @@ export default function ContactPage() {
 
   return (
     <div className="pb-20">
+      <Seo path="/contact" title="Contact Us — KW Enterprise" description="Get in touch with KW Enterprise for orders, wholesale enquiries and support." />
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section className="relative bg-gradient-to-br from-amber-700 via-amber-800 to-amber-900 text-white overflow-hidden">

@@ -1,8 +1,11 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
+import { ModulesProvider } from '@/contexts/ModulesContext';
 import Layout from '@/components/layout/Layout';
 import AdminLayout from '@/components/layout/AdminLayout';
+import AnalyticsTracker from '@/components/common/AnalyticsTracker';
 import { Toaster } from '@/components/ui/sonner';
 
 // Public pages
@@ -44,12 +47,20 @@ import AdminPagesPage from '@/pages/admin/AdminPagesPage';
 import AdminPricingPage from '@/pages/admin/AdminPricingPage';
 import AdminSetupPage from '@/pages/admin/AdminSetupPage';
 import AdminDeliveryLocationsPage from '@/pages/admin/AdminDeliveryLocationsPage';
+import AdminModulesPage from '@/pages/admin/AdminModulesPage';
+import AdminBrandsPage from '@/pages/admin/AdminBrandsPage';
+import AdminTeamPage from '@/pages/admin/AdminTeamPage';
+import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage';
+import AdminSeoPage from '@/pages/admin/AdminSeoPage';
 
 export default function App() {
   return (
+    <HelmetProvider>
     <BrowserRouter>
       <AuthProvider>
+        <ModulesProvider>
         <CartProvider>
+          <AnalyticsTracker />
           <Routes>
             {/* Public Routes */}
             <Route element={<Layout />}>
@@ -96,11 +107,18 @@ export default function App() {
               <Route path="pages" element={<AdminPagesPage />} />
               <Route path="pricing" element={<AdminPricingPage />} />
               <Route path="delivery-locations" element={<AdminDeliveryLocationsPage />} />
+              <Route path="modules" element={<AdminModulesPage />} />
+              <Route path="brands" element={<AdminBrandsPage />} />
+              <Route path="team" element={<AdminTeamPage />} />
+              <Route path="analytics" element={<AdminAnalyticsPage />} />
+              <Route path="seo" element={<AdminSeoPage />} />
             </Route>
           </Routes>
           <Toaster />
         </CartProvider>
+        </ModulesProvider>
       </AuthProvider>
     </BrowserRouter>
+    </HelmetProvider>
   );
 }

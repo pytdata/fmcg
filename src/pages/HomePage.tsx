@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getCategories, getProducts, getBanners, getGiftBoxes, getCmsPage } from '@/services/store';
 import { api } from '@/lib/api';
+import { useModules } from '@/contexts/ModulesContext';
+import Seo from '@/components/common/Seo';
+import TrustedBrands from '@/components/home/TrustedBrands';
 import BannerSlider from '@/components/common/BannerSlider';
 import ProductCard from '@/components/common/ProductCard';
 import CategoryCard from '@/components/common/CategoryCard';
@@ -103,6 +106,7 @@ const PROMO_COLOURS = [
 
 // ══════════════════════════════════════════════════════════════════════════════
 export default function HomePage() {
+  const { isEnabled } = useModules();
   const [cms, setCms] = useState<HomeContent>(DEFAULT_CONTENT);
   const [categories, setCategories] = useState<Category[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -150,9 +154,30 @@ export default function HomePage() {
 
   return (
     <div className="space-y-0 pb-0">
+      <Seo
+        path="/"
+        title="KW Enterprise — Trusted FMCG Distribution in Ghana"
+        description="KW Enterprise is a leading FMCG distributor in Ghana, supplying quality household, personal-care and food products to retailers and homes — with fast, reliable delivery."
+      />
+
       {/* ── Hero Banner Slider ── */}
       <section className="container mx-auto px-4 pt-4 pb-6">
         <BannerSlider banners={banners} />
+      </section>
+
+      {/* ── Business Positioning Band ── */}
+      <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
+        <div className="container mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="max-w-2xl">
+            <p className="text-amber-100 text-xs font-semibold uppercase tracking-widest mb-1">FMCG Distribution &amp; Wholesale</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-balance">Your trusted partner for quality consumer goods across Ghana</h2>
+            <p className="text-amber-100 text-sm mt-1.5 text-pretty">Wholesale supply, retail delivery and corporate solutions — backed by a catalogue of trusted brands.</p>
+          </div>
+          <div className="flex gap-3 shrink-0">
+            <Link to="/shop"><Button className="bg-white text-amber-700 hover:bg-amber-50 font-semibold">Shop Products</Button></Link>
+            <Link to="/contact"><Button variant="ghost" className="border border-white/40 text-white hover:bg-white/10">Partner With Us</Button></Link>
+          </div>
+        </div>
       </section>
 
       {/* ── Features Strip ── */}
@@ -178,7 +203,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Flash Sale Banner ── */}
-      {flashSale.enabled && (
+      {isEnabled('flash_sale') && flashSale.enabled && (
         <section className="container mx-auto px-4 py-6">
           <div className="bg-gradient-to-r from-red-600 to-orange-500 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -201,7 +226,7 @@ export default function HomePage() {
       )}
 
       {/* ── Categories ── */}
-      {topCategories.length > 0 && (
+      {isEnabled('categories_section') && topCategories.length > 0 && (
         <section className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-5">
             <div>
@@ -219,6 +244,7 @@ export default function HomePage() {
       )}
 
       {/* ── Featured Products ── */}
+      {isEnabled('featured_products') && (
       <section className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-5">
           <div>
@@ -240,8 +266,10 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+      )}
 
       {/* ── Stats Bar ── */}
+      {isEnabled('stats') && (
       <section className="bg-amber-600 py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-white text-center">
@@ -254,9 +282,10 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── Two-column promo ── */}
-      {promoBanners.length > 0 && (
+      {isEnabled('promo_banners') && promoBanners.length > 0 && (
         <section className="container mx-auto px-4 py-10">
           <div className="grid md:grid-cols-2 gap-5">
             {promoBanners.slice(0, 2).map((b, i) => {
@@ -282,6 +311,7 @@ export default function HomePage() {
       )}
 
       {/* ── Gift Boxes CTA ── */}
+      {isEnabled('gift_boxes') && (
       <section className="container mx-auto px-4 pb-8">
         <div className="bg-gradient-to-r from-emerald-700 to-emerald-900 rounded-2xl p-6 sm:p-10 text-white flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="max-w-lg">
@@ -303,9 +333,10 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── Gift Boxes Grid ── */}
-      {giftBoxes.length > 0 && (
+      {isEnabled('gift_boxes') && giftBoxes.length > 0 && (
         <section className="container mx-auto px-4 pb-8">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl font-bold text-gray-900">Popular Gift Boxes</h2>
@@ -318,6 +349,7 @@ export default function HomePage() {
       )}
 
       {/* ── Why Choose Us ── */}
+      {isEnabled('why_choose_us') && (
       <section className="bg-gray-50 py-14">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
@@ -345,9 +377,10 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── Testimonials (from CMS) ── */}
-      {testimonials.length > 0 && (
+      {isEnabled('testimonials') && testimonials.length > 0 && (
         <section className="container mx-auto px-4 py-14">
           <div className="text-center mb-10">
             <span className="text-amber-600 text-sm font-medium uppercase tracking-widest">Customer Reviews</span>
@@ -376,26 +409,11 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ── Trusted Brands (from CMS) ── */}
-      {brands.length > 0 && (
-        <section className="bg-gray-50 py-10">
-          <div className="container mx-auto px-4">
-            <p className="text-center text-sm text-gray-400 font-medium uppercase tracking-widest mb-6">Trusted Brands We Carry</p>
-            <div className="flex flex-wrap justify-center gap-4">
-              {brands.map((b, i) => {
-                const bgs = ['bg-blue-50', 'bg-green-50', 'bg-orange-50', 'bg-red-50', 'bg-yellow-50', 'bg-purple-50'];
-                return (
-                  <div key={i} className={`${bgs[i % bgs.length]} rounded-xl px-6 py-3 text-sm font-semibold text-gray-600 border border-white shadow-sm`}>
-                    {b}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* ── Trusted Brands (admin-managed logos) ── */}
+      {isEnabled('trusted_brands') && <TrustedBrands fallbackNames={brands} />}
 
       {/* ── Blog / Tips ── */}
+      {isEnabled('blog') && (
       <section className="container mx-auto px-4 py-14">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -422,8 +440,10 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+      )}
 
       {/* ── App Download CTA ── */}
+      {isEnabled('app_promo') && (
       <section className="container mx-auto px-4 pb-8">
         <div className="bg-gradient-to-r from-gray-900 to-gray-700 rounded-2xl p-6 sm:p-10 text-white">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -452,8 +472,10 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── Newsletter (from CMS) ── */}
+      {isEnabled('newsletter') && (
       <section className="bg-amber-50 border-t border-amber-100 py-14">
         <div className="container mx-auto px-4 text-center max-w-xl">
           <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
@@ -469,8 +491,10 @@ export default function HomePage() {
           </form>
         </div>
       </section>
+      )}
 
       {/* ── Social CTA ── */}
+      {isEnabled('social') && (
       <section className="bg-white border-t border-gray-100 py-8">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm text-gray-500 mb-4">Follow us for daily deals and updates</p>
@@ -481,6 +505,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      )}
     </div>
   );
 }

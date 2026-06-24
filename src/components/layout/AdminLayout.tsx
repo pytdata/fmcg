@@ -9,10 +9,12 @@ import { toast } from 'sonner';
 import {
   LayoutDashboard, ShoppingBag, Users, Tag, Gift, Image, Settings, Menu, LogOut,
   ChevronLeft, ChevronRight, FileText, Ticket, Lock, Loader2, FolderOpen, MapPin,
+  Boxes, Building2, UsersRound, BarChart3, Globe,
 } from 'lucide-react';
 
 const adminNav = [
   { label: 'Dashboard',          path: '/admin',                    icon: LayoutDashboard },
+  { label: 'Analytics',          path: '/admin/analytics',          icon: BarChart3 },
   { label: 'Products',           path: '/admin/products',           icon: ShoppingBag },
   { label: 'Categories',         path: '/admin/categories',         icon: FolderOpen },
   { label: 'Orders',             path: '/admin/orders',             icon: ShoppingBag },
@@ -21,8 +23,12 @@ const adminNav = [
   { label: 'Promotions',         path: '/admin/promotions',         icon: Tag },
   { label: 'Gift Boxes',         path: '/admin/gift-boxes',         icon: Gift },
   { label: 'Banners',            path: '/admin/banners',            icon: Image },
+  { label: 'Brands',             path: '/admin/brands',             icon: Building2 },
+  { label: 'Team',               path: '/admin/team',               icon: UsersRound },
   { label: 'Pages',              path: '/admin/pages',              icon: FileText },
+  { label: 'SEO',                path: '/admin/seo',                icon: Globe },
   { label: 'Pricing',            path: '/admin/pricing',            icon: Ticket },
+  { label: 'Modules',            path: '/admin/modules',            icon: Boxes },
   { label: 'Settings',           path: '/admin/settings',           icon: Settings },
 ];
 

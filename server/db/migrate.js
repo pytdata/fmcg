@@ -3,6 +3,39 @@
  * Called automatically on server startup from index.js.
  */
 const pool = require('./pool');
+const fs = require('fs');
+const path = require('path');
+
+// FMCG catalog (main categories, sub categories, products) generated from the
+// supplied product-list spreadsheet. Seeded/merged on startup (idempotent).
+let CATALOG = { main_categories: [], sub_categories: [], products: [] };
+try {
+  CATALOG = JSON.parse(fs.readFileSync(path.join(__dirname, 'fmcg-catalog.json'), 'utf8'));
+} catch (e) {
+  console.error('[migrations] catalog load failed:', e.message);
+}
+
+// Modules that can be activated / deactivated by the admin to show or hide
+// sections + features across the website.
+const DEFAULT_MODULES = [
+  { key: 'categories_section', label: 'Shop by Category',     description: 'Category grid on the homepage', sort_order: 1 },
+  { key: 'featured_products',  label: 'Featured Products',    description: 'Featured products section on the homepage', sort_order: 2 },
+  { key: 'flash_sale',         label: 'Flash Sale Banner',    description: 'Promotional flash-sale strip on the homepage', sort_order: 3 },
+  { key: 'promo_banners',      label: 'Promo Banners',        description: 'Two-column promotional banners', sort_order: 4 },
+  { key: 'stats',              label: 'Stats Bar',            description: 'Company stats counter bar', sort_order: 5 },
+  { key: 'why_choose_us',      label: 'Why Choose Us',        description: 'Value-proposition cards', sort_order: 6 },
+  { key: 'gift_boxes',         label: 'Gift Boxes',           description: 'Gift box catalogue + navigation', sort_order: 7 },
+  { key: 'custom_gift_box',    label: 'Custom Gift Box',      description: 'Build-your-own gift box feature', sort_order: 8 },
+  { key: 'testimonials',       label: 'Testimonials',         description: 'Customer reviews section', sort_order: 9 },
+  { key: 'trusted_brands',     label: 'Trusted Brands',       description: 'Trusted brand logos section', sort_order: 10 },
+  { key: 'team',               label: 'Our Team',             description: 'Team members section on the About page', sort_order: 11 },
+  { key: 'blog',               label: 'Blog & Tips',          description: 'Blog/tips section on the homepage', sort_order: 12 },
+  { key: 'newsletter',         label: 'Newsletter',           description: 'Newsletter signup section', sort_order: 13 },
+  { key: 'app_promo',          label: 'App Download CTA',     description: 'Mobile app coming-soon banner', sort_order: 14 },
+  { key: 'social',             label: 'Social Links',         description: 'Follow-us social links section', sort_order: 15 },
+  { key: 'services_page',      label: 'Services Page',        description: 'Services page + navigation link', sort_order: 16 },
+  { key: 'faq_page',           label: 'FAQ Page',             description: 'FAQ page + navigation link', sort_order: 17 },
+];
 
 async function runMigrations() {
   const client = await pool.connect();
@@ -206,6 +239,180 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_contact_messages_email
         ON contact_messages(email)
     `);
+
+    // ── 006: app_meta key/value table (used for one-time seed guards) ─────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS app_meta (
+        key   TEXT PRIMARY KEY,
+        value TEXT,
+        updated_at TIMESTAMPTZ DEFAULT now()
+      )
+    `);
+
+    // ── 007: site_modules (admin activates/deactivates website modules) ───────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS site_modules (
+        key         TEXT PRIMARY KEY,
+        label       TEXT NOT NULL,
+        description TEXT,
+        enabled     BOOLEAN NOT NULL DEFAULT true,
+        sort_order  INTEGER DEFAULT 0,
+        updated_at  TIMESTAMPTZ DEFAULT now()
+      )
+    `);
+    for (const m of DEFAULT_MODULES) {
+      await client.query(
+        `INSERT INTO site_modules (key, label, description, sort_order)
+         VALUES ($1,$2,$3,$4)
+         ON CONFLICT (key) DO UPDATE
+           SET label = EXCLUDED.label,
+               description = EXCLUDED.description,
+               sort_order = EXCLUDED.sort_order`,
+        [m.key, m.label, m.description, m.sort_order],
+      );
+    }
+
+    // ── 008: trusted brands (admin uploads brand logo URLs) ───────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS brands (
+        id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name        TEXT NOT NULL,
+        logo_url    TEXT,
+        website_url TEXT,
+        sort_order  INTEGER DEFAULT 0,
+        is_active   BOOLEAN DEFAULT true,
+        created_at  TIMESTAMPTZ DEFAULT now()
+      )
+    `);
+
+    // ── 009: team members (admin manages the team) ────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS team_members (
+        id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name         TEXT NOT NULL,
+        role         TEXT,
+        photo_url    TEXT,
+        bio          TEXT,
+        email        TEXT,
+        linkedin_url TEXT,
+        twitter_url  TEXT,
+        sort_order   INTEGER DEFAULT 0,
+        is_active    BOOLEAN DEFAULT true,
+        created_at   TIMESTAMPTZ DEFAULT now()
+      )
+    `);
+
+    // ── 010: first-party analytics events ─────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS analytics_events (
+        id          BIGSERIAL PRIMARY KEY,
+        event_type  TEXT NOT NULL DEFAULT 'pageview',
+        path        TEXT,
+        referrer    TEXT,
+        device      TEXT,
+        session_id  TEXT,
+        user_id     UUID,
+        meta        JSONB DEFAULT '{}',
+        created_at  TIMESTAMPTZ DEFAULT now()
+      )
+    `);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_analytics_created ON analytics_events(created_at DESC)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_analytics_type ON analytics_events(event_type)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_analytics_path ON analytics_events(path)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_analytics_session ON analytics_events(session_id)`);
+
+    // ── 011: SEO meta per page/path + audit history ───────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS seo_meta (
+        path             TEXT PRIMARY KEY,
+        title            TEXT,
+        meta_title       TEXT,
+        meta_description TEXT,
+        keywords         TEXT,
+        og_image         TEXT,
+        canonical_url    TEXT,
+        h1               TEXT,
+        focus_keyword    TEXT,
+        noindex          BOOLEAN DEFAULT false,
+        score            INTEGER DEFAULT 0,
+        updated_at       TIMESTAMPTZ DEFAULT now()
+      )
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS seo_audits (
+        id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        overall_score INTEGER NOT NULL DEFAULT 0,
+        results       JSONB NOT NULL DEFAULT '[]',
+        created_at    TIMESTAMPTZ DEFAULT now()
+      )
+    `);
+    // Seed default SEO rows for the main public paths (merge — never overwrite).
+    const seoDefaults = [
+      { path: '/',         title: 'KW Enterprise — Trusted FMCG Distribution in Ghana', meta_description: 'KW Enterprise is a leading FMCG distributor in Ghana supplying quality household, personal-care and food products to retailers and homes.' },
+      { path: '/shop',     title: 'Shop FMCG Products — KW Enterprise', meta_description: 'Browse hundreds of quality FMCG products across personal care, home care, food and more. Fast, reliable delivery across Ghana.' },
+      { path: '/about',    title: 'About Us — KW Enterprise', meta_description: 'Learn about KW Enterprise, our mission, values and the team behind Ghana’s trusted FMCG distribution business.' },
+      { path: '/services', title: 'Our Services — KW Enterprise', meta_description: 'Wholesale distribution, retail supply and corporate solutions from KW Enterprise.' },
+      { path: '/contact',  title: 'Contact Us — KW Enterprise', meta_description: 'Get in touch with KW Enterprise for orders, wholesale enquiries and support.' },
+    ];
+    for (const s of seoDefaults) {
+      await client.query(
+        `INSERT INTO seo_meta (path, title, meta_title, meta_description)
+         VALUES ($1,$2,$2,$3)
+         ON CONFLICT (path) DO NOTHING`,
+        [s.path, s.title, s.meta_description],
+      );
+    }
+
+    // ── 012: seed FMCG catalog (categories + sub-categories + products) ────────
+    const { rows: seededRows } = await client.query(
+      `SELECT value FROM app_meta WHERE key = 'catalog_seeded_v1'`,
+    );
+    if (!seededRows.length && CATALOG.main_categories.length) {
+      const slugToId = {};
+      // main categories
+      for (const c of CATALOG.main_categories) {
+        const { rows } = await client.query(
+          `INSERT INTO categories (name, slug, sort_order)
+           VALUES ($1,$2,$3)
+           ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+           RETURNING id`,
+          [c.name, c.slug, c.sort_order || 0],
+        );
+        slugToId[c.slug] = rows[0].id;
+      }
+      // sub categories (link to parent; merge parent if missing)
+      for (const c of CATALOG.sub_categories) {
+        const parentId = slugToId[c.parent_slug] || null;
+        const { rows } = await client.query(
+          `INSERT INTO categories (name, slug, sort_order, parent_id)
+           VALUES ($1,$2,$3,$4)
+           ON CONFLICT (slug) DO UPDATE
+             SET parent_id = COALESCE(categories.parent_id, EXCLUDED.parent_id),
+                 name = EXCLUDED.name
+           RETURNING id`,
+          [c.name, c.slug, c.sort_order || 0, parentId],
+        );
+        slugToId[c.slug] = rows[0].id;
+      }
+      // products (price defaults to 0 — admin sets prices afterwards)
+      let inserted = 0;
+      for (const p of CATALOG.products) {
+        const catId = slugToId[p.category_slug] || null;
+        await client.query(
+          `INSERT INTO products (name, slug, sku, category_id, price, stock_quantity, is_active)
+           VALUES ($1,$2,$3,$4,0,0,true)
+           ON CONFLICT (slug) DO NOTHING`,
+          [p.name, p.slug, p.sku || null, catId],
+        );
+        inserted++;
+      }
+      await client.query(
+        `INSERT INTO app_meta (key, value) VALUES ('catalog_seeded_v1', $1)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+        [String(inserted)],
+      );
+      console.log(`[migrations] FMCG catalog seeded: ${CATALOG.main_categories.length} main, ${CATALOG.sub_categories.length} sub, ${inserted} products.`);
+    }
 
     console.log('[migrations] All migrations applied successfully.');
   } catch (err) {

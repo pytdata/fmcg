@@ -4,6 +4,7 @@ import type { CmsPage } from '@/types/index';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import Seo from '@/components/common/Seo';
 import {
   Truck, ShoppingBag, Gift, Building, CheckCircle, ArrowRight,
   Star, Phone, Mail, Package, Users, Calendar, Sparkles,
@@ -98,6 +99,7 @@ export default function ServicesPage() {
 
   return (
     <div className="pb-20">
+      <Seo path="/services" title="Our Services — KW Enterprise" description="Wholesale distribution, retail supply and corporate solutions from KW Enterprise." />
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section className="relative bg-gradient-to-br from-amber-700 via-amber-800 to-amber-900 text-white overflow-hidden">
