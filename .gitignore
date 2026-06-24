@@ -11,6 +11,8 @@ build/
 # pnpm files — Vercel should use npm (avoids "packages field missing" error)
 pnpm-lock.yaml
 pnpm-workspace.yaml
+# npm lockfile — not tracked by this project (deps use floating/custom versions)
+package-lock.json
 # Logs & context
 *.log
 historical_context.txt
