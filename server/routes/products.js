@@ -130,16 +130,16 @@ router.get('/:slug', async (req, res) => {
 // POST /api/products (admin)
 router.post('/', auth, adminOnly, async (req, res) => {
   const { name, slug, description, price, compare_price, stock_quantity,
-    category_id, images, sku, weight_kg, is_featured, is_active } = req.body;
+    category_id, images, video_urls, sku, weight_kg, is_featured, is_active } = req.body;
   if (!name || !slug) return res.status(400).json({ error: 'name and slug are required' });
   try {
     const { rows } = await pool.query(
       `INSERT INTO products (name, slug, description, price, compare_price, stock_quantity,
-         category_id, images, sku, weight_kg, is_featured, is_active)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+         category_id, images, video_urls, sku, weight_kg, is_featured, is_active)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
       [name, slug, description || null, price || 0, compare_price || null,
-       stock_quantity || 0, category_id || null, images || [], sku || null,
-       weight_kg || null, is_featured ?? false, is_active ?? true],
+       stock_quantity || 0, category_id || null, images || [], video_urls || [],
+       sku || null, weight_kg || null, is_featured ?? false, is_active ?? true],
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -151,15 +151,15 @@ router.post('/', auth, adminOnly, async (req, res) => {
 // PUT /api/products/:id (admin)
 router.put('/:id', auth, adminOnly, async (req, res) => {
   const { name, slug, description, price, compare_price, stock_quantity,
-    category_id, images, sku, weight_kg, is_featured, is_active } = req.body;
+    category_id, images, video_urls, sku, weight_kg, is_featured, is_active } = req.body;
   try {
     const { rows } = await pool.query(
       `UPDATE products SET name=$1, slug=$2, description=$3, price=$4, compare_price=$5,
-         stock_quantity=$6, category_id=$7, images=$8, sku=$9, weight_kg=$10,
-         is_featured=$11, is_active=$12, updated_at=now()
-       WHERE id=$13 RETURNING *`,
+         stock_quantity=$6, category_id=$7, images=$8, video_urls=$9, sku=$10, weight_kg=$11,
+         is_featured=$12, is_active=$13, updated_at=now()
+       WHERE id=$14 RETURNING *`,
       [name, slug, description || null, price, compare_price || null,
-       stock_quantity, category_id || null, images || [], sku || null,
+       stock_quantity, category_id || null, images || [], video_urls || [], sku || null,
        weight_kg || null, is_featured ?? false, is_active ?? true, req.params.id],
     );
     if (!rows.length) return res.status(404).json({ error: 'Product not found' });

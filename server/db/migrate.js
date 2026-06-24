@@ -38,7 +38,15 @@ const DEFAULT_MODULES = [
 ];
 
 // Bump this whenever new migration steps are added so they run once per DB.
-const SCHEMA_VERSION = '6';
+const SCHEMA_VERSION = '7';
+
+// Default gift packaging options (admin can edit/add more afterwards).
+const DEFAULT_PACKAGING = [
+  { name: 'Premium Gold Wrap',  style: 'Luxury',   material: 'Gold foil paper + satin ribbon', price: 12, details: 'Our most premium finish — rich gold foil wrap with a hand-tied satin ribbon. Perfect for special occasions.' },
+  { name: 'Elegant Silver Wrap', style: 'Elegant',  material: 'Silver matte paper + ribbon',     price: 10, details: 'Understated and classy silver matte wrap with a coordinated ribbon.' },
+  { name: 'Soft Pink Wrap',      style: 'Romantic', material: 'Pink gift paper + gold ribbon',    price: 8,  details: 'Soft pink wrap with a gold ribbon — ideal for birthdays and celebrations.' },
+  { name: 'Classic Kraft Wrap',  style: 'Rustic',   material: 'Recycled kraft paper + twine',     price: 6,  details: 'Eco-friendly rustic kraft wrap finished with natural twine.' },
+];
 
 async function runMigrations() {
   const client = await pool.connect();
@@ -441,6 +449,78 @@ async function runMigrations() {
     } catch (seedErr) {
       console.error('[migrations] Catalog seed skipped:', seedErr.message);
     }
+
+    // ── 014: product video URLs (Google-Drive style media links) ──────────────
+    await client.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS video_urls TEXT[] DEFAULT '{}'`);
+
+    // ── 015: gift packaging options (admin-managed) ───────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS gift_packaging (
+        id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name        TEXT NOT NULL,
+        style       TEXT,
+        material    TEXT,
+        price       NUMERIC(10,2) NOT NULL DEFAULT 0,
+        details     TEXT,
+        image_url   TEXT,
+        sort_order  INTEGER DEFAULT 0,
+        is_active   BOOLEAN DEFAULT true,
+        created_at  TIMESTAMPTZ DEFAULT now()
+      )
+    `);
+    {
+      const { rows: pkgCount } = await client.query('SELECT COUNT(*)::int AS n FROM gift_packaging');
+      if (pkgCount[0].n === 0) {
+        let i = 0;
+        for (const p of DEFAULT_PACKAGING) {
+          await client.query(
+            `INSERT INTO gift_packaging (name, style, material, price, details, sort_order)
+             VALUES ($1,$2,$3,$4,$5,$6)`,
+            [p.name, p.style, p.material, p.price, p.details, i++],
+          );
+        }
+      }
+    }
+
+    // ── 016: blog posts (Blog & Tips) ─────────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS blog_posts (
+        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        title           TEXT NOT NULL,
+        slug            TEXT UNIQUE NOT NULL,
+        excerpt         TEXT,
+        content         TEXT,
+        cover_image_url TEXT,
+        category        TEXT,
+        author          TEXT,
+        read_time       TEXT,
+        is_published    BOOLEAN DEFAULT false,
+        published_at    TIMESTAMPTZ,
+        created_at      TIMESTAMPTZ DEFAULT now(),
+        updated_at      TIMESTAMPTZ DEFAULT now()
+      )
+    `);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_blog_published ON blog_posts(is_published, published_at DESC)`);
+
+    // ── 017: newsletter subscriber fields + email campaigns ───────────────────
+    await client.query(`ALTER TABLE newsletter_subscribers ADD COLUMN IF NOT EXISTS name TEXT`);
+    await client.query(`ALTER TABLE newsletter_subscribers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true`);
+    await client.query(`ALTER TABLE newsletter_subscribers ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'signup'`);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS email_campaigns (
+        id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        subject          TEXT NOT NULL,
+        preheader        TEXT,
+        body_html        TEXT NOT NULL DEFAULT '',
+        template         TEXT DEFAULT 'basic',
+        status           TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','sending','sent','failed')),
+        recipients_count INTEGER DEFAULT 0,
+        sent_count       INTEGER DEFAULT 0,
+        error_message    TEXT,
+        created_at       TIMESTAMPTZ DEFAULT now(),
+        sent_at          TIMESTAMPTZ
+      )
+    `);
 
     // ── Mark this schema version complete so the heavy body is skipped next time.
     await client.query(

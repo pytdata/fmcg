@@ -299,11 +299,20 @@ function HomeEditor({ content, onChange }: { content: Record<string, unknown>; o
 function AboutEditor({ content, onChange }: { content: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
   type Stat = { label: string; value: string };
   type Value = { title: string; desc: string };
+  type Story = {
+    eyebrow?: string; heading?: string; paragraphs?: string[]; image_url?: string;
+    badge_value?: string; badge_label?: string; highlights?: string[];
+  };
 
   const stats: Stat[] = (content.stats as Stat[]) || [];
   const values: Value[] = (content.values as Value[]) || [];
+  const story: Story = (content.story as Story) || {};
+  const paragraphs: string[] = story.paragraphs || [];
+  const highlights: string[] = story.highlights || [];
 
   const setField = (k: string, v: unknown) => onChange({ ...content, [k]: v });
+  // Merge into the existing story object so other story fields are preserved.
+  const setStory = (k: keyof Story, v: unknown) => setField('story', { ...story, [k]: v });
   const setStat = (i: number, k: keyof Stat, v: string) => {
     const updated = [...stats]; updated[i] = { ...updated[i], [k]: v };
     setField('stats', updated);
@@ -312,10 +321,68 @@ function AboutEditor({ content, onChange }: { content: Record<string, unknown>; 
     const updated = [...values]; updated[i] = { ...updated[i], [k]: v };
     setField('values', updated);
   };
+  const setParagraph = (i: number, v: string) => {
+    const updated = [...paragraphs]; updated[i] = v; setStory('paragraphs', updated);
+  };
+  const setHighlight = (i: number, v: string) => {
+    const updated = [...highlights]; updated[i] = v; setStory('highlights', updated);
+  };
 
   return (
     <div className="space-y-4">
       <HeroEditor content={content} onChange={onChange} />
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm font-semibold">Our Story</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <SectionField label="Eyebrow" value={story.eyebrow || ''} onChange={v => setStory('eyebrow', v)} placeholder="Our Story" />
+          <SectionField label="Heading" value={story.heading || ''} onChange={v => setStory('heading', v)} placeholder="Section heading" />
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-normal">Paragraphs</Label>
+              <Button type="button" size="sm" variant="outline" className="h-7 text-xs"
+                onClick={() => setStory('paragraphs', [...paragraphs, ''])}>
+                <Plus className="w-3 h-3 mr-1" /> Add
+              </Button>
+            </div>
+            {paragraphs.map((p, i) => (
+              <div key={i} className="flex gap-2 items-start">
+                <Textarea value={p} onChange={e => setParagraph(i, e.target.value)} rows={3}
+                  placeholder="Paragraph text" className="resize-none flex-1" />
+                <Button type="button" size="sm" variant="ghost" className="h-9 w-9 p-0 text-destructive shrink-0"
+                  onClick={() => setStory('paragraphs', paragraphs.filter((_, j) => j !== i))}>
+                  <Minus className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            ))}
+            {paragraphs.length === 0 && <p className="text-xs text-gray-400">No paragraphs yet.</p>}
+          </div>
+          <SectionField label="Image URL" value={story.image_url || ''} onChange={v => setStory('image_url', v)} placeholder="https://... or Google Drive link" />
+          <div className="grid grid-cols-2 gap-3">
+            <SectionField label="Badge Value" value={story.badge_value || ''} onChange={v => setStory('badge_value', v)} placeholder="5+ yrs" />
+            <SectionField label="Badge Label" value={story.badge_label || ''} onChange={v => setStory('badge_label', v)} placeholder="of dependable distribution" />
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-normal">Highlights</Label>
+              <Button type="button" size="sm" variant="outline" className="h-7 text-xs"
+                onClick={() => setStory('highlights', [...highlights, ''])}>
+                <Plus className="w-3 h-3 mr-1" /> Add
+              </Button>
+            </div>
+            {highlights.map((h, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <Input value={h} onChange={e => setHighlight(i, e.target.value)}
+                  placeholder="Highlight text" className="flex-1" />
+                <Button type="button" size="sm" variant="ghost" className="h-9 w-9 p-0 text-destructive shrink-0"
+                  onClick={() => setStory('highlights', highlights.filter((_, j) => j !== i))}>
+                  <Minus className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            ))}
+            {highlights.length === 0 && <p className="text-xs text-gray-400">No highlights yet.</p>}
+          </div>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-sm font-semibold">Mission & Vision</CardTitle></CardHeader>
         <CardContent className="space-y-3">

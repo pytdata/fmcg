@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { resolveImageUrl, IMAGE_PLACEHOLDER } from '@/lib/media';
 import type { Banner } from '@/types/index';
 
 export default function BannerSlider({ banners }: { banners: Banner[] }) {
@@ -20,7 +21,12 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
   return (
     <div className="relative w-full h-[300px] sm:h-[380px] md:h-[460px] overflow-hidden rounded-xl">
       <div className="absolute inset-0 transition-opacity duration-700">
-        <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover" />
+        <img
+          src={banner.image_url ? resolveImageUrl(banner.image_url) : IMAGE_PLACEHOLDER}
+          alt={banner.title}
+          onError={e => { (e.currentTarget as HTMLImageElement).src = IMAGE_PLACEHOLDER; }}
+          className="w-full h-full object-cover"
+        />
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
       </div>
       <div className="relative z-10 flex flex-col justify-center h-full container mx-auto px-4 sm:px-8 max-w-3xl">

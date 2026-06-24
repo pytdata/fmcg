@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Tag, Zap, Flame, Sparkles, ShoppingBag, Ticket } from 'lucide-react';
+import { resolveImageUrl, IMAGE_PLACEHOLDER } from '@/lib/media';
 import type { Product } from '@/types/index';
 
 // Map icon names stored in DB to lucide components
@@ -29,7 +30,12 @@ export default function ProductCard({ product }: { product: Product }) {
   return (
     <div className="group bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col">
       <Link to={`/product/${product.slug}`} className="relative block aspect-[4/3] overflow-hidden bg-gray-100">
-        <img src={product.images?.[0] || '/placeholder.svg'} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        <img
+          src={product.images?.[0] ? resolveImageUrl(product.images[0]) : IMAGE_PLACEHOLDER}
+          alt={product.name}
+          onError={e => { (e.currentTarget as HTMLImageElement).src = IMAGE_PLACEHOLDER; }}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
 
         {/* Pricing tag badges — top-left stack */}
         {tags.length > 0 && (

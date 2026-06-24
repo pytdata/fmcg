@@ -52,6 +52,11 @@ import AdminBrandsPage from '@/pages/admin/AdminBrandsPage';
 import AdminTeamPage from '@/pages/admin/AdminTeamPage';
 import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage';
 import AdminSeoPage from '@/pages/admin/AdminSeoPage';
+import AdminGiftPackagingPage from '@/pages/admin/AdminGiftPackagingPage';
+import AdminBlogPage from '@/pages/admin/AdminBlogPage';
+import AdminNewsletterPage from '@/pages/admin/AdminNewsletterPage';
+import BlogPage from '@/pages/BlogPage';
+import BlogPostPage from '@/pages/BlogPostPage';
 
 export default function App() {
   return (
@@ -82,6 +87,8 @@ export default function App() {
               <Route path="/wishlist" element={<WishlistPage />} />
               <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
               <Route path="/about" element={<AboutPage />} />
+              <Route path="/blog" element={<BlogPage />} />
+              <Route path="/blog/:slug" element={<BlogPostPage />} />
               <Route path="/services" element={<ServicesPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/terms" element={<TermsPage />} />
@@ -112,6 +119,9 @@ export default function App() {
               <Route path="team" element={<AdminTeamPage />} />
               <Route path="analytics" element={<AdminAnalyticsPage />} />
               <Route path="seo" element={<AdminSeoPage />} />
+              <Route path="gift-packaging" element={<AdminGiftPackagingPage />} />
+              <Route path="blog" element={<AdminBlogPage />} />
+              <Route path="newsletter" element={<AdminNewsletterPage />} />
             </Route>
           </Routes>
           <Toaster />

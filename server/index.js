@@ -62,6 +62,9 @@ app.use('/api/brands',      require('./routes/brands'));
 app.use('/api/team',        require('./routes/team'));
 app.use('/api/analytics',   require('./routes/analytics'));
 app.use('/api/seo',         require('./routes/seo'));
+app.use('/api/gift-packaging', require('./routes/giftPackaging'));
+app.use('/api/blog',        require('./routes/blog'));
+app.use('/api/email',       require('./routes/email'));
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));

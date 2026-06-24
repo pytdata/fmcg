@@ -9,27 +9,60 @@ import { toast } from 'sonner';
 import {
   LayoutDashboard, ShoppingBag, Users, Tag, Gift, Image, Settings, Menu, LogOut,
   ChevronLeft, ChevronRight, FileText, Ticket, Lock, Loader2, FolderOpen, MapPin,
-  Boxes, Building2, UsersRound, BarChart3, Globe,
+  Boxes, Building2, UsersRound, BarChart3, Globe, Newspaper, Mail, PackageOpen,
 } from 'lucide-react';
 
-const adminNav = [
-  { label: 'Dashboard',          path: '/admin',                    icon: LayoutDashboard },
-  { label: 'Analytics',          path: '/admin/analytics',          icon: BarChart3 },
-  { label: 'Products',           path: '/admin/products',           icon: ShoppingBag },
-  { label: 'Categories',         path: '/admin/categories',         icon: FolderOpen },
-  { label: 'Orders',             path: '/admin/orders',             icon: ShoppingBag },
-  { label: 'Customers',          path: '/admin/customers',          icon: Users },
-  { label: 'Delivery Locations', path: '/admin/delivery-locations', icon: MapPin },
-  { label: 'Promotions',         path: '/admin/promotions',         icon: Tag },
-  { label: 'Gift Boxes',         path: '/admin/gift-boxes',         icon: Gift },
-  { label: 'Banners',            path: '/admin/banners',            icon: Image },
-  { label: 'Brands',             path: '/admin/brands',             icon: Building2 },
-  { label: 'Team',               path: '/admin/team',               icon: UsersRound },
-  { label: 'Pages',              path: '/admin/pages',              icon: FileText },
-  { label: 'SEO',                path: '/admin/seo',                icon: Globe },
-  { label: 'Pricing',            path: '/admin/pricing',            icon: Ticket },
-  { label: 'Modules',            path: '/admin/modules',            icon: Boxes },
-  { label: 'Settings',           path: '/admin/settings',           icon: Settings },
+const navGroups = [
+  {
+    title: 'Overview',
+    items: [
+      { label: 'Dashboard', path: '/admin',           icon: LayoutDashboard },
+      { label: 'Analytics', path: '/admin/analytics',  icon: BarChart3 },
+    ],
+  },
+  {
+    title: 'Catalog',
+    items: [
+      { label: 'Products',        path: '/admin/products',        icon: ShoppingBag },
+      { label: 'Categories',      path: '/admin/categories',      icon: FolderOpen },
+      { label: 'Pricing',         path: '/admin/pricing',         icon: Ticket },
+      { label: 'Gift Boxes',      path: '/admin/gift-boxes',      icon: Gift },
+      { label: 'Gift Packaging',  path: '/admin/gift-packaging',  icon: PackageOpen },
+    ],
+  },
+  {
+    title: 'Sales',
+    items: [
+      { label: 'Orders',             path: '/admin/orders',             icon: ShoppingBag },
+      { label: 'Customers',          path: '/admin/customers',          icon: Users },
+      { label: 'Promotions',         path: '/admin/promotions',         icon: Tag },
+      { label: 'Delivery Locations', path: '/admin/delivery-locations', icon: MapPin },
+    ],
+  },
+  {
+    title: 'Content',
+    items: [
+      { label: 'Pages',   path: '/admin/pages',   icon: FileText },
+      { label: 'Blog',    path: '/admin/blog',    icon: Newspaper },
+      { label: 'Banners', path: '/admin/banners', icon: Image },
+      { label: 'Brands',  path: '/admin/brands',  icon: Building2 },
+      { label: 'Team',    path: '/admin/team',    icon: UsersRound },
+    ],
+  },
+  {
+    title: 'Marketing',
+    items: [
+      { label: 'Newsletter', path: '/admin/newsletter', icon: Mail },
+      { label: 'SEO',        path: '/admin/seo',        icon: Globe },
+    ],
+  },
+  {
+    title: 'System',
+    items: [
+      { label: 'Modules',  path: '/admin/modules',  icon: Boxes },
+      { label: 'Settings', path: '/admin/settings', icon: Settings },
+    ],
+  },
 ];
 
 // ── Inline admin login screen ─────────────────────────────────────────────────
@@ -170,21 +203,28 @@ export default function AdminLayout() {
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
-        <nav className="flex-1 py-3 px-2 space-y-1 overflow-y-auto">
-          {adminNav.map(item => {
-            const active = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-2 py-2 rounded-lg text-sm transition-colors ${active ? 'bg-amber-50 text-amber-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
-                title={collapsed ? item.label : undefined}
-              >
-                <item.icon className="w-4 h-4 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 min-h-0 py-3 px-2 space-y-3 overflow-y-auto">
+          {navGroups.map(group => (
+            <div key={group.title} className="space-y-1">
+              {!collapsed && (
+                <p className="px-2 pt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">{group.title}</p>
+              )}
+              {group.items.map(item => {
+                const active = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-3 px-2 py-2 rounded-lg text-sm transition-colors ${active ? 'bg-amber-50 text-amber-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    <item.icon className="w-4 h-4 shrink-0" />
+                    {!collapsed && <span>{item.label}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
         <div className="p-2 border-t">
           <button
@@ -212,27 +252,32 @@ export default function AdminLayout() {
             </SheetTrigger>
             <SheetContent side="left" className="w-60 p-0">
               <div className="flex flex-col h-full">
-                <div className="flex items-center gap-2 h-14 px-4 border-b">
+                <div className="flex items-center gap-2 h-14 px-4 border-b shrink-0">
                   <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center">
                     <span className="text-white font-bold text-xs">KW</span>
                   </div>
                   <span className="font-bold text-sm">Admin</span>
                 </div>
-                <nav className="flex-1 py-3 px-2 space-y-1">
-                  {adminNav.map(item => {
-                    const active = location.pathname === item.path;
-                    return (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center gap-3 px-2 py-2 rounded-lg text-sm transition-colors ${active ? 'bg-amber-50 text-amber-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
-                      >
-                        <item.icon className="w-4 h-4 shrink-0" />
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
+                <nav className="flex-1 min-h-0 py-3 px-2 space-y-3 overflow-y-auto">
+                  {navGroups.map(group => (
+                    <div key={group.title} className="space-y-1">
+                      <p className="px-2 pt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">{group.title}</p>
+                      {group.items.map(item => {
+                        const active = location.pathname === item.path;
+                        return (
+                          <Link
+                            key={item.path}
+                            to={item.path}
+                            onClick={() => setMobileOpen(false)}
+                            className={`flex items-center gap-3 px-2 py-2 rounded-lg text-sm transition-colors ${active ? 'bg-amber-50 text-amber-700 font-medium' : 'text-gray-600 hover:bg-gray-50'}`}
+                          >
+                            <item.icon className="w-4 h-4 shrink-0" />
+                            <span>{item.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  ))}
                 </nav>
                 <div className="p-2 border-t">
                   <button

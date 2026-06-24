@@ -207,4 +207,14 @@ async function sendOrderEmail({ to, event, data }) {
   }
 }
 
-module.exports = { sendOrderEmail };
+// ─── Reusable send helper (for campaigns / test emails) ─────────────────────────
+async function sendRawEmail({ to, subject, html }) {
+  return getTransporter().sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to,
+    subject,
+    html,
+  });
+}
+
+module.exports = { sendOrderEmail, buildEmailHtml, sendRawEmail };

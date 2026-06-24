@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { useModules } from '@/contexts/ModulesContext';
 import Seo from '@/components/common/Seo';
 import TrustedBrands from '@/components/home/TrustedBrands';
+import BlogTips from '@/components/home/BlogTips';
 import BannerSlider from '@/components/common/BannerSlider';
 import ProductCard from '@/components/common/ProductCard';
 import CategoryCard from '@/components/common/CategoryCard';
@@ -73,28 +74,6 @@ const DEFAULT_CONTENT: HomeContent = {
   brands: ['Nestlé', 'Unilever', 'Procter & Gamble', 'Coca-Cola', 'Heineken', "Kellogg's"],
 };
 
-// ── Demo fallbacks ────────────────────────────────────────────────────────────
-const DEMO_BANNERS: Banner[] = [
-  { id: '1', title: 'Premium FMCG Products Delivered to You', subtitle: 'Shop quality groceries, beverages and household essentials at unbeatable prices across Ghana.', image_url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80', link: '/shop', button_text: 'Shop Now', sort_order: 0, is_active: true },
-  { id: '2', title: 'Gift Boxes for Every Occasion', subtitle: 'Curated gift packages with exclusive coupon deals. Perfect for birthdays, weddings and celebrations.', image_url: 'https://images.unsplash.com/photo-1512909006721-3d6018887383?w=1200&q=80', link: '/gift-boxes', button_text: 'Explore Gifts', sort_order: 1, is_active: true },
-  { id: '3', title: 'Fast & Reliable Delivery', subtitle: 'Same-day delivery in Accra. We bring the supermarket to your doorstep — fresh, fast and affordable.', image_url: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=1200&q=80', link: '/shop', button_text: 'Order Now', sort_order: 2, is_active: true },
-];
-const DEMO_PRODUCTS: Product[] = [
-  { id: 'd1', name: 'Organic Coconut Oil 500ml', slug: 'coconut-oil', price: 45.00, compare_price: 55.00, stock_quantity: 50, images: ['https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400&q=80'], is_featured: true, is_active: true },
-  { id: 'd2', name: 'Premium Basmati Rice 5kg', slug: 'basmati-rice', price: 85.00, compare_price: 95.00, stock_quantity: 30, images: ['https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&q=80'], is_featured: true, is_active: true },
-  { id: 'd3', name: 'Fresh Orange Juice 1L Pack', slug: 'orange-juice', price: 22.00, stock_quantity: 100, images: ['https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400&q=80'], is_featured: true, is_active: true },
-  { id: 'd4', name: 'Extra Virgin Olive Oil', slug: 'olive-oil', price: 68.00, compare_price: 80.00, stock_quantity: 25, images: ['https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400&q=80'], is_featured: true, is_active: true },
-  { id: 'd5', name: 'Whole Grain Oats 1kg', slug: 'oats', price: 35.00, stock_quantity: 60, images: ['https://images.unsplash.com/photo-1614144052553-5f4aa9219b9b?w=400&q=80'], is_featured: true, is_active: true },
-  { id: 'd6', name: 'Almond Milk 1L Carton', slug: 'almond-milk', price: 28.00, stock_quantity: 40, images: ['https://images.unsplash.com/photo-1550583724-b2692b85b150?w=400&q=80'], is_featured: true, is_active: true },
-  { id: 'd7', name: 'Honey Jar 350g', slug: 'honey', price: 42.00, compare_price: 50.00, stock_quantity: 80, images: ['https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&q=80'], is_featured: true, is_active: true },
-  { id: 'd8', name: 'Premium Coffee Blend 200g', slug: 'coffee', price: 55.00, stock_quantity: 35, images: ['https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&q=80'], is_featured: true, is_active: true },
-];
-
-const BLOG_POSTS = [
-  { title: '5 Must-Have FMCG Products for Every Ghanaian Home', category: 'Lifestyle', excerpt: 'Discover the essential pantry staples that make cooking easier and more nutritious for your family.', image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=80', date: 'May 12, 2026', readTime: '3 min' },
-  { title: 'How to Choose the Perfect Gift Box for Any Occasion', category: 'Gifting', excerpt: 'From birthdays to weddings, learn the art of selecting the right gift that leaves a lasting impression.', image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&q=80', date: 'May 8, 2026', readTime: '4 min' },
-  { title: 'Behind the Scenes: Our Quality Control Process', category: 'Company', excerpt: 'A look at how we ensure every product that reaches you meets our strict quality standards.', image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&q=80', date: 'May 2, 2026', readTime: '5 min' },
-];
 
 // Banner promo bg colours cycle
 const PROMO_COLOURS = [
@@ -124,8 +103,8 @@ export default function HomePage() {
     }).catch(() => {});
     // Load live data
     getCategories().then(setCategories);
-    getProducts({ featured: true, limit: 8 }).then(d => setFeaturedProducts(d.length ? d : DEMO_PRODUCTS));
-    getBanners().then(d => setBanners(d.length ? d : DEMO_BANNERS));
+    getProducts({ featured: true, limit: 8 }).then(setFeaturedProducts);
+    getBanners().then(setBanners);
     getGiftBoxes().then(d => setGiftBoxes(d.slice(0, 4)));
   }, []);
 
@@ -161,9 +140,11 @@ export default function HomePage() {
       />
 
       {/* ── Hero Banner Slider ── */}
-      <section className="container mx-auto px-4 pt-4 pb-6">
-        <BannerSlider banners={banners} />
-      </section>
+      {banners.length > 0 && (
+        <section className="container mx-auto px-4 pt-4 pb-6">
+          <BannerSlider banners={banners} />
+        </section>
+      )}
 
       {/* ── Business Positioning Band ── */}
       <section className="bg-gradient-to-r from-amber-600 to-amber-700 text-white">
@@ -244,7 +225,7 @@ export default function HomePage() {
       )}
 
       {/* ── Featured Products ── */}
-      {isEnabled('featured_products') && (
+      {isEnabled('featured_products') && featuredProducts.length > 0 && (
       <section className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-5">
           <div>
@@ -412,35 +393,8 @@ export default function HomePage() {
       {/* ── Trusted Brands (admin-managed logos) ── */}
       {isEnabled('trusted_brands') && <TrustedBrands fallbackNames={brands} />}
 
-      {/* ── Blog / Tips ── */}
-      {isEnabled('blog') && (
-      <section className="container mx-auto px-4 py-14">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <span className="text-amber-600 text-sm font-medium uppercase tracking-widest">Blog & Tips</span>
-            <h2 className="text-2xl font-bold text-gray-900 mt-1 text-balance">Latest from KW</h2>
-          </div>
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {BLOG_POSTS.map((post, i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow">
-              <div className="aspect-video overflow-hidden">
-                <img src={post.image} alt={post.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
-              </div>
-              <div className="p-5 flex-1 flex flex-col">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="secondary" className="text-xs">{post.category}</Badge>
-                  <span className="text-xs text-gray-400">{post.readTime} read</span>
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2 text-balance leading-snug">{post.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed flex-1 text-pretty">{post.excerpt}</p>
-                <p className="text-xs text-gray-400 mt-3">{post.date}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-      )}
+      {/* ── Blog / Tips (admin-managed, from DB) ── */}
+      {isEnabled('blog') && <BlogTips />}
 
       {/* ── App Download CTA ── */}
       {isEnabled('app_promo') && (
