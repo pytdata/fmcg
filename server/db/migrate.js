@@ -37,14 +37,37 @@ const DEFAULT_MODULES = [
   { key: 'faq_page',           label: 'FAQ Page',             description: 'FAQ page + navigation link', sort_order: 17 },
 ];
 
+// Bump this whenever new migration steps are added so they run once per DB.
+const SCHEMA_VERSION = '6';
+
 async function runMigrations() {
   const client = await pool.connect();
   try {
-    // ── 001: add parent_id to categories ──────────────────────────────────────
+    // ── Meta + CRITICAL schema guarantees (always run, isolated) ──────────────
+    // These must succeed even if a later step fails, because public endpoints
+    // depend on them. Each is idempotent.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS app_meta (
+        key TEXT PRIMARY KEY, value TEXT, updated_at TIMESTAMPTZ DEFAULT now()
+      )
+    `);
     await client.query(`
       ALTER TABLE categories
         ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES categories(id) ON DELETE SET NULL
     `);
+    await client.query(`
+      ALTER TABLE categories
+        ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true
+    `);
+
+    // Run the (heavier) full migration body only once per schema version — keeps
+    // serverless cold starts cheap and avoids re-doing work on every invocation.
+    const { rows: verRows } = await client.query(
+      `SELECT value FROM app_meta WHERE key = 'schema_version'`,
+    );
+    if (verRows[0]?.value === SCHEMA_VERSION) {
+      return;
+    }
 
     // ── 002: create delivery_locations table ──────────────────────────────────
     await client.query(`
@@ -364,6 +387,8 @@ async function runMigrations() {
     }
 
     // ── 012: seed FMCG catalog (categories + sub-categories + products) ────────
+    // Isolated so a seeding hiccup can never block schema_version from being set.
+    try {
     const { rows: seededRows } = await client.query(
       `SELECT value FROM app_meta WHERE key = 'catalog_seeded_v1'`,
     );
@@ -413,12 +438,16 @@ async function runMigrations() {
       );
       console.log(`[migrations] FMCG catalog seeded: ${CATALOG.main_categories.length} main, ${CATALOG.sub_categories.length} sub, ${inserted} products.`);
     }
+    } catch (seedErr) {
+      console.error('[migrations] Catalog seed skipped:', seedErr.message);
+    }
 
-    // ── 013: category active/inactive status ──────────────────────────────────
-    await client.query(`
-      ALTER TABLE categories
-        ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true
-    `);
+    // ── Mark this schema version complete so the heavy body is skipped next time.
+    await client.query(
+      `INSERT INTO app_meta (key, value) VALUES ('schema_version', $1)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+      [SCHEMA_VERSION],
+    );
 
     console.log('[migrations] All migrations applied successfully.');
   } catch (err) {
