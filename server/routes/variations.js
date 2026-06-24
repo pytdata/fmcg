@@ -39,13 +39,16 @@ router.get('/', async (req, res) => {
 
 // POST /api/products/:productId/variations — create variation type
 router.post('/', auth, adminOnly, async (req, res) => {
-  const { name, sort_order = 0, options = [] } = req.body;
+  const { name, sort_order, options = [] } = req.body;
   if (!name) return res.status(400).json({ error: 'Variation type name required' });
   try {
     const { rows } = await pool.query(
       `INSERT INTO product_variation_types (product_id, name, sort_order)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [req.params.productId, name, sort_order],
+       VALUES ($1, $2, COALESCE($3::int, (
+         SELECT COALESCE(MAX(sort_order) + 1, 0)
+         FROM product_variation_types WHERE product_id = $1
+       ))) RETURNING *`,
+      [req.params.productId, name, sort_order ?? null],
     );
     const typeId = rows[0].id;
 
@@ -100,17 +103,26 @@ router.delete('/:typeId', auth, adminOnly, async (req, res) => {
 
 // POST /api/products/:productId/variations/:typeId/options
 router.post('/:typeId/options', auth, adminOnly, async (req, res) => {
-  const { value, price_modifier = 0, stock_quantity = 0, sku, image_url, sort_order = 0 } = req.body;
+  const { value, price_modifier = 0, stock_quantity = 0, sku, image_url, sort_order } = req.body;
   if (!value) return res.status(400).json({ error: 'Option value required' });
   try {
+    // Guard: the option's type must belong to the product in the URL.
     const { rows } = await pool.query(
       `INSERT INTO product_variation_options
-       (type_id, value, price_modifier, stock_quantity, sku, image_url, sort_order)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [req.params.typeId, value, price_modifier, stock_quantity, sku || null, image_url || null, sort_order],
+         (type_id, value, price_modifier, stock_quantity, sku, image_url, sort_order)
+       SELECT $1, $2, $3, $4, $5, $6,
+         COALESCE($7::int, (SELECT COALESCE(MAX(sort_order) + 1, 0)
+                       FROM product_variation_options WHERE type_id = $1))
+       FROM product_variation_types
+       WHERE id = $1 AND product_id = $8
+       RETURNING *`,
+      [req.params.typeId, value, price_modifier, stock_quantity,
+       sku || null, image_url || null, sort_order ?? null, req.params.productId],
     );
+    if (!rows.length) return res.status(404).json({ error: 'Variation type not found' });
     res.status(201).json(rows[0]);
   } catch (err) {
+    console.error('[variations/option-create]', err);
     res.status(500).json({ error: 'Failed to create option' });
   }
 });

@@ -4,10 +4,10 @@ import { getProductBySlug, getProducts } from '@/services/store';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { ShoppingCart, Minus, Plus, Truck, ShieldCheck, RotateCcw, Play, Pause, ChevronLeft, ChevronRight, Volume2, VolumeX } from 'lucide-react';
 import ProductCard from '@/components/common/ProductCard';
-import type { Product, ProductMediaVariant, ProductVariationType } from '@/types/index';
+import { resolveImageUrl, resolveVideoEmbed, isEmbedVideo, IMAGE_PLACEHOLDER } from '@/lib/media';
+import type { Product, ProductVariationType } from '@/types/index';
 
 // ── Media item: can be image or video ────────────────────────────────────────
 interface MediaItem {
@@ -15,7 +15,8 @@ interface MediaItem {
   thumb: string;
   src: string;
   alt?: string;
-  variant?: ProductMediaVariant;
+  /** True when the video should be embedded via an <iframe> (YouTube / Drive). */
+  embed?: boolean;
 }
 
 // ── Video player component ────────────────────────────────────────────────────
@@ -82,8 +83,10 @@ function MediaCarousel({ items, selected, onSelect }: {
       {/* Main view */}
       <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
         {item?.type === 'video'
-          ? <VideoPlayer src={item.src} poster={item.thumb} />
-          : <img src={item?.src || '/placeholder.svg'} alt={item?.alt || 'Product'} className="w-full h-full object-cover" />
+          ? (item.embed
+              ? <iframe src={item.src} title={item.alt || 'Product video'} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="w-full h-full" />
+              : <VideoPlayer src={item.src} poster={item.thumb} />)
+          : <img src={item?.src || IMAGE_PLACEHOLDER} alt={item?.alt || 'Product'} className="w-full h-full object-cover" onError={e => { e.currentTarget.src = IMAGE_PLACEHOLDER; }} />
         }
         {items.length > 1 && (
           <>
@@ -112,7 +115,7 @@ function MediaCarousel({ items, selected, onSelect }: {
               onClick={() => onSelect(i)}
               className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all ${i === selected ? 'border-amber-500 shadow-sm' : 'border-gray-100 hover:border-gray-300'}`}
             >
-              <img src={it.thumb} alt="" className="w-full h-full object-cover" />
+              <img src={it.thumb} alt="" className="w-full h-full object-cover" onError={e => { e.currentTarget.src = IMAGE_PLACEHOLDER; }} />
               {it.type === 'video' && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                   <Play className="w-4 h-4 text-white" />
@@ -141,6 +144,7 @@ function VariationsSelector({ variations, selections, onChange }: {
             {vtype.options.map(opt => {
               const selected = selections[vtype.id] === opt.id;
               const noStock = opt.stock_quantity === 0;
+              const priceMod = Number(opt.price_modifier) || 0;
               return (
                 <button
                   key={opt.id}
@@ -155,9 +159,9 @@ function VariationsSelector({ variations, selections, onChange }: {
                     }`}
                 >
                   {opt.value}
-                  {opt.price_modifier !== 0 && (
+                  {priceMod !== 0 && (
                     <span className="ml-1 text-xs text-gray-500">
-                      ({opt.price_modifier > 0 ? '+' : ''}GHS {opt.price_modifier.toFixed(2)})
+                      ({priceMod > 0 ? '+' : ''}GHS {priceMod.toFixed(2)})
                     </span>
                   )}
                 </button>
@@ -177,14 +181,16 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
   const [qty, setQty] = useState(1);
-  const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedMedia, setSelectedMedia] = useState(0);
+  const [selections, setSelections] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!slug) return;
     getProductBySlug(slug).then(p => {
       setProduct(p);
       setQty(1);
-      setSelectedImage(0);
+      setSelectedMedia(0);
+      setSelections({});
     });
     getProducts({ limit: 4 }).then(setRelated);
   }, [slug]);
@@ -197,22 +203,38 @@ export default function ProductDetailPage() {
     );
   }
 
+  const imageItems: MediaItem[] = (product.images ?? [])
+    .filter(Boolean)
+    .map(img => {
+      const src = resolveImageUrl(img);
+      return { type: 'image' as const, src, thumb: src, alt: product.name };
+    });
+  const videoItems: MediaItem[] = (product.video_urls ?? [])
+    .filter(Boolean)
+    .map(url => {
+      const embed = isEmbedVideo(url);
+      return {
+        type: 'video' as const,
+        src: embed ? resolveVideoEmbed(url) : url.trim(),
+        thumb: IMAGE_PLACEHOLDER,
+        alt: product.name,
+        embed,
+      };
+    });
+  const mediaItems: MediaItem[] = [...imageItems, ...videoItems];
+  const hasVariations = (product.variations?.length ?? 0) > 0;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 sm:p-6 mb-8">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
-          {/* Images */}
+          {/* Media */}
           <div className="w-full lg:w-1/2">
-            <div className="aspect-square rounded-lg overflow-hidden bg-gray-50 mb-3">
-              <img src={product.images?.[selectedImage] || '/placeholder.svg'} alt={product.name} className="w-full h-full object-cover" />
-            </div>
-            {product.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto">
-                {product.images.map((img, i) => (
-                  <button key={i} onClick={() => setSelectedImage(i)} className={`w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 ${i === selectedImage ? 'border-amber-600' : 'border-gray-100'}`}>
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
+            {mediaItems.length > 0 ? (
+              <MediaCarousel items={mediaItems} selected={selectedMedia} onSelect={setSelectedMedia} />
+            ) : (
+              <div className="aspect-square rounded-lg overflow-hidden bg-gray-50">
+                <img src={IMAGE_PLACEHOLDER} alt={product.name} className="w-full h-full object-cover" />
               </div>
             )}
           </div>
@@ -222,9 +244,9 @@ export default function ProductDetailPage() {
             <Link to={`/shop/${product.category?.slug}`} className="text-xs text-amber-600 font-medium uppercase tracking-wide">{product.category?.name}</Link>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-1 mb-3">{product.name}</h1>
             <div className="flex items-baseline gap-3 mb-4">
-              <span className="text-3xl font-bold text-gray-900">GHS {product.price.toFixed(2)}</span>
-              {product.compare_price && product.compare_price > 0 && (
-                <span className="text-lg text-gray-400 line-through">GHS {product.compare_price.toFixed(2)}</span>
+              <span className="text-3xl font-bold text-gray-900">GHS {Number(product.price).toFixed(2)}</span>
+              {product.compare_price && Number(product.compare_price) > 0 && (
+                <span className="text-lg text-gray-400 line-through">GHS {Number(product.compare_price).toFixed(2)}</span>
               )}
             </div>
             <p className="text-gray-600 text-sm leading-relaxed mb-5">{product.description}</p>
@@ -235,6 +257,16 @@ export default function ProductDetailPage() {
               </span>
               {product.sku && <span className="text-gray-400 text-xs">SKU: {product.sku}</span>}
             </div>
+
+            {hasVariations && product.variations && (
+              <div className="mb-6">
+                <VariationsSelector
+                  variations={product.variations}
+                  selections={selections}
+                  onChange={(typeId, optionId) => setSelections(s => ({ ...s, [typeId]: optionId }))}
+                />
+              </div>
+            )}
 
             <div className="flex items-center gap-4 mb-6">
               <div className="flex items-center border border-gray-200 rounded-lg">

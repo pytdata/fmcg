@@ -1,13 +1,29 @@
 import { api } from '@/lib/api';
-import type { Product, Category, Banner, GiftBox, Promotion, SiteSettings, Order, Brand, TeamMember, SeoMeta } from '@/types/index';
+import { cachedGet } from '@/lib/api';
+import type { Product, Category, Banner, GiftBox, Promotion, SiteSettings, Order, Brand, TeamMember, SeoMeta, GiftPackaging, BlogPost } from '@/types/index';
+
+export async function getGiftPackaging(): Promise<GiftPackaging[]> {
+  try { return await cachedGet<GiftPackaging[]>('/api/gift-packaging'); }
+  catch { return []; }
+}
+
+export async function getBlogPosts(): Promise<BlogPost[]> {
+  try { return await cachedGet<BlogPost[]>('/api/blog'); }
+  catch { return []; }
+}
+
+export async function getBlogPost(slug: string): Promise<BlogPost | null> {
+  try { return await api.get<BlogPost>(`/api/blog/${slug}`); }
+  catch { return null; }
+}
 
 export async function getBrands(): Promise<Brand[]> {
-  try { return await api.get<Brand[]>('/api/brands'); }
+  try { return await cachedGet<Brand[]>('/api/brands'); }
   catch { return []; }
 }
 
 export async function getTeam(): Promise<TeamMember[]> {
-  try { return await api.get<TeamMember[]>('/api/team'); }
+  try { return await cachedGet<TeamMember[]>('/api/team'); }
   catch { return []; }
 }
 
@@ -17,7 +33,7 @@ export async function getSeoMeta(path: string): Promise<SeoMeta | null> {
 }
 
 export async function getCategories(): Promise<Category[]> {
-  try { return await api.get<Category[]>('/api/categories'); }
+  try { return await cachedGet<Category[]>('/api/categories'); }
   catch { return []; }
 }
 

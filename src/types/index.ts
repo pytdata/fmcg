@@ -78,6 +78,7 @@ export interface Product {
   stock_quantity: number;
   category_id?: string;
   images: string[];
+  video_urls?: string[];
   image_variants?: ProductMediaVariant[];
   videos?: ProductMediaVariant[];
   media?: ProductMediaVariant[];
@@ -307,6 +308,58 @@ export interface SeoAuditResult {
   path: string;
   score: number;
   checks: SeoAuditCheck[];
+}
+
+export interface GiftPackaging {
+  id: string;
+  name: string;
+  style?: string;
+  material?: string;
+  price: number;
+  details?: string;
+  image_url?: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  content?: string;
+  cover_image_url?: string;
+  category?: string;
+  author?: string;
+  read_time?: string;
+  is_published: boolean;
+  published_at?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface EmailSubscriber {
+  id: string;
+  email: string;
+  name?: string;
+  is_active?: boolean;
+  source?: string;
+  created_at?: string;
+}
+
+export interface EmailCampaign {
+  id: string;
+  subject: string;
+  preheader?: string;
+  body_html: string;
+  template?: string;
+  status: 'draft' | 'sending' | 'sent' | 'failed';
+  recipients_count: number;
+  sent_count: number;
+  error_message?: string;
+  created_at?: string;
+  sent_at?: string;
 }
 
 export interface AnalyticsSummary {

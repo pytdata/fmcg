@@ -68,6 +68,24 @@ export const api = {
   delete: <T>(path: string) => apiRequest<T>(path, { method: 'DELETE' }),
 };
 
+// ── Lightweight in-memory GET cache (faster repeat loads of public data) ──────
+const _cache = new Map<string, { ts: number; data: unknown }>();
+const DEFAULT_TTL = 60_000; // 60s
+
+export async function cachedGet<T>(path: string, ttl = DEFAULT_TTL): Promise<T> {
+  const hit = _cache.get(path);
+  if (hit && Date.now() - hit.ts < ttl) return hit.data as T;
+  const data = await apiRequest<T>(path);
+  _cache.set(path, { ts: Date.now(), data });
+  return data;
+}
+
+/** Invalidate cached GETs — call after a mutation. Pass a prefix to clear a subset. */
+export function invalidateCache(prefix?: string) {
+  if (!prefix) { _cache.clear(); return; }
+  for (const key of _cache.keys()) if (key.startsWith(prefix)) _cache.delete(key);
+}
+
 // Multipart upload helper
 export async function uploadImage(path: string, file: File): Promise<{ url?: string; urls?: string[] }> {
   const token = getToken();

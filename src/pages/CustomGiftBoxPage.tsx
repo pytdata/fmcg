@@ -1,31 +1,31 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProducts } from '@/services/store';
+import { getProducts, getGiftPackaging } from '@/services/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { toast } from 'sonner';
-import { Plus, Minus, Trash2, Gift, Package, ArrowRight, Check } from 'lucide-react';
-import type { Product } from '@/types/index';
-
-const PACKAGING_STYLES = [
-  { name: 'Premium Gold Wrap', price: 12, image: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=200&q=80' },
-  { name: 'Elegant Silver Wrap', price: 10, image: 'https://images.unsplash.com/photo-1512909006721-3d6018887383?w=200&q=80' },
-  { name: 'Soft Pink Wrap', price: 8, image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=200&q=80' },
-  { name: 'Classic Kraft Wrap', price: 6, image: 'https://images.unsplash.com/photo-1607082348824-0a96fd2a3c69?w=200&q=80' },
-];
+import { Plus, Minus, Trash2, Gift, Package, ArrowRight } from 'lucide-react';
+import { resolveImageUrl, IMAGE_PLACEHOLDER } from '@/lib/media';
+import type { Product, GiftPackaging } from '@/types/index';
 
 export default function CustomGiftBoxPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [packagingOptions, setPackagingOptions] = useState<GiftPackaging[]>([]);
   const [selectedItems, setSelectedItems] = useState<{ product: Product; qty: number }[]>([]);
-  const [packaging, setPackaging] = useState(PACKAGING_STYLES[0]);
+  const [packaging, setPackaging] = useState<GiftPackaging | null>(null);
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
+  const [picker, setPicker] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     getProducts({ limit: 50 }).then(setProducts);
+    getGiftPackaging().then(opts => {
+      setPackagingOptions(opts);
+      if (opts.length) setPackaging(opts[0]);
+    });
   }, []);
 
   const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
@@ -40,6 +40,12 @@ export default function CustomGiftBoxPage() {
     });
   };
 
+  const addById = (id: string) => {
+    const product = products.find(p => p.id === id);
+    if (product) addItem(product);
+    setPicker('');
+  };
+
   const updateQty = (id: string, delta: number) => {
     setSelectedItems(prev => prev.map(i => i.product.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i));
   };
@@ -49,7 +55,8 @@ export default function CustomGiftBoxPage() {
   };
 
   const itemsTotal = selectedItems.reduce((sum, i) => sum + i.product.price * i.qty, 0);
-  const total = itemsTotal + packaging.price;
+  const packagingPrice = packaging ? Number(packaging.price) : 0;
+  const total = itemsTotal + packagingPrice;
 
   const proceedToCheckout = () => {
     if (selectedItems.length === 0) {
@@ -57,7 +64,9 @@ export default function CustomGiftBoxPage() {
       return;
     }
     const boxData = {
-      packaging_style: packaging.name,
+      packaging_id: packaging?.id ?? null,
+      packaging_style: packaging?.name ?? '',
+      packaging_price: packagingPrice,
       personal_message: message,
       items: selectedItems.map(i => ({
         product_id: i.product.id,
@@ -85,11 +94,25 @@ export default function CustomGiftBoxPage() {
         <div className="flex-1 space-y-6">
           <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-3">1. Select Products</h3>
-            <Input placeholder="Search products..." value={search} onChange={e => setSearch(e.target.value)} className="mb-4" />
+            <div className="mb-4">
+              <SearchableSelect
+                value={picker}
+                onValueChange={addById}
+                options={products.map(p => ({
+                  value: p.id,
+                  label: `${p.name} — GHS ${p.price.toFixed(2)}`,
+                  keywords: [p.name],
+                }))}
+                placeholder="Quick add a product…"
+                searchPlaceholder="Search products…"
+                emptyText="No products found."
+              />
+            </div>
+            <Input placeholder="Filter products below..." value={search} onChange={e => setSearch(e.target.value)} className="mb-4" />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-1">
               {filtered.map(p => (
                 <div key={p.id} className="border border-gray-100 rounded-lg p-2.5 hover:border-amber-300 transition-colors">
-                  <img src={p.images?.[0] || ''} alt={p.name} className="w-full h-20 object-cover rounded-md mb-2 bg-gray-50" />
+                  <img src={p.images?.[0] || IMAGE_PLACEHOLDER} alt={p.name} className="w-full h-20 object-cover rounded-md mb-2 bg-gray-50" />
                   <p className="text-xs font-medium text-gray-900 line-clamp-1 mb-0.5">{p.name}</p>
                   <p className="text-xs text-gray-500 mb-2">GHS {p.price.toFixed(2)}</p>
                   <Button size="sm" variant="outline" className="w-full text-xs h-7" onClick={() => addItem(p)}><Plus className="w-3 h-3 mr-1" /> Add</Button>
@@ -100,19 +123,39 @@ export default function CustomGiftBoxPage() {
 
           <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-3">2. Choose Packaging</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {PACKAGING_STYLES.map(style => (
-                <button
-                  key={style.name}
-                  onClick={() => setPackaging(style)}
-                  className={`border-2 rounded-lg p-2 text-left transition-all ${packaging.name === style.name ? 'border-emerald-600 bg-emerald-50' : 'border-gray-100 hover:border-gray-300'}`}
-                >
-                  <img src={style.image} alt={style.name} className="w-full h-16 object-cover rounded-md mb-2" />
-                  <p className="text-xs font-medium text-gray-900">{style.name}</p>
-                  <p className="text-xs text-emerald-600 font-semibold">+GHS {style.price.toFixed(2)}</p>
-                </button>
-              ))}
-            </div>
+            {packagingOptions.length === 0 ? (
+              <p className="text-sm text-gray-400 py-4 text-center">
+                No packaging options are available right now.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {packagingOptions.map(style => (
+                  <button
+                    type="button"
+                    key={style.id}
+                    onClick={() => setPackaging(style)}
+                    className={`border-2 rounded-lg p-2 text-left transition-all ${packaging?.id === style.id ? 'border-emerald-600 bg-emerald-50' : 'border-gray-100 hover:border-gray-300'}`}
+                  >
+                    <img
+                      src={resolveImageUrl(style.image_url) || IMAGE_PLACEHOLDER}
+                      alt={style.name}
+                      className="w-full h-16 object-cover rounded-md mb-2 bg-gray-50"
+                      onError={e => { (e.currentTarget as HTMLImageElement).src = IMAGE_PLACEHOLDER; }}
+                    />
+                    <p className="text-xs font-medium text-gray-900 line-clamp-1">{style.name}</p>
+                    {(style.style || style.material) && (
+                      <p className="text-[11px] text-gray-500 line-clamp-1">
+                        {[style.style, style.material].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
+                    {style.details && (
+                      <p className="text-[11px] text-gray-400 line-clamp-2 mt-0.5">{style.details}</p>
+                    )}
+                    <p className="text-xs text-emerald-600 font-semibold mt-1">+GHS {Number(style.price).toFixed(2)}</p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
@@ -132,17 +175,17 @@ export default function CustomGiftBoxPage() {
               <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
                 {selectedItems.map(item => (
                   <div key={item.product.id} className="flex items-center gap-2 text-sm">
-                    <img src={item.product.images?.[0]} alt="" className="w-8 h-8 rounded object-cover bg-gray-50" />
+                    <img src={item.product.images?.[0] || IMAGE_PLACEHOLDER} alt="" className="w-8 h-8 rounded object-cover bg-gray-50" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-gray-900 truncate">{item.product.name}</p>
                     </div>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => updateQty(item.product.id, -1)} className="p-0.5 hover:bg-gray-100 rounded"><Minus className="w-3 h-3" /></button>
+                      <button type="button" onClick={() => updateQty(item.product.id, -1)} className="p-0.5 hover:bg-gray-100 rounded"><Minus className="w-3 h-3" /></button>
                       <span className="w-5 text-center text-xs">{item.qty}</span>
-                      <button onClick={() => updateQty(item.product.id, 1)} className="p-0.5 hover:bg-gray-100 rounded"><Plus className="w-3 h-3" /></button>
+                      <button type="button" onClick={() => updateQty(item.product.id, 1)} className="p-0.5 hover:bg-gray-100 rounded"><Plus className="w-3 h-3" /></button>
                     </div>
                     <span className="text-xs font-semibold text-gray-900 w-14 text-right">GHS {(item.product.price * item.qty).toFixed(2)}</span>
-                    <button onClick={() => removeItem(item.product.id)} className="text-gray-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
+                    <button type="button" onClick={() => removeItem(item.product.id)} className="text-gray-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>
                   </div>
                 ))}
               </div>
@@ -150,7 +193,10 @@ export default function CustomGiftBoxPage() {
 
             <div className="border-t pt-3 space-y-2 text-sm">
               <div className="flex justify-between text-gray-600"><span>Items</span><span>GHS {itemsTotal.toFixed(2)}</span></div>
-              <div className="flex justify-between text-gray-600"><span>Packaging ({packaging.name})</span><span>GHS {packaging.price.toFixed(2)}</span></div>
+              <div className="flex justify-between text-gray-600">
+                <span>Packaging{packaging ? ` (${packaging.name})` : ''}</span>
+                <span>GHS {packagingPrice.toFixed(2)}</span>
+              </div>
             </div>
             <div className="border-t pt-3 mt-3 mb-4">
               <div className="flex justify-between font-bold text-gray-900 text-lg">

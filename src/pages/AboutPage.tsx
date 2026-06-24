@@ -7,12 +7,23 @@ import { Button } from '@/components/ui/button';
 import { useModules } from '@/contexts/ModulesContext';
 import Seo from '@/components/common/Seo';
 import TeamSection from '@/components/about/TeamSection';
+import { resolveImageUrl } from '@/lib/media';
 import {
   Target, Eye, Star, Award, Truck, ShieldCheck,
   Heart, Leaf, Gem, ArrowRight, CheckCircle2, Phone, Mail, MapPin,
 } from 'lucide-react';
 
 // ── CMS content types ─────────────────────────────────────────────────────────
+interface AboutStory {
+  eyebrow?: string;
+  heading?: string;
+  paragraphs?: string[];
+  image_url?: string;
+  badge_value?: string;
+  badge_label?: string;
+  highlights?: string[];
+}
+
 interface AboutContent {
   hero?: { heading?: string; subheading?: string; image_url?: string };
   mission?: string;
@@ -20,9 +31,14 @@ interface AboutContent {
   values?: { title: string; desc: string }[];
   team?: { name: string; role: string; image_url?: string; bio?: string }[];
   stats?: { label: string; value: string }[];
+  story?: AboutStory;
 }
 
 const VALUE_ICONS = [Star, Award, ShieldCheck, Truck, Target, Eye, Heart, Leaf, Gem];
+
+// Fallback image for the Our Story section when no image_url is configured.
+const STORY_FALLBACK_IMAGE =
+  'https://images.unsplash.com/photo-1553413077-190dd305871c?w=700&auto=format&fit=crop';
 
 // ── Static fallback data ──────────────────────────────────────────────────────
 const STATIC: AboutContent = {
@@ -55,7 +71,38 @@ const STATIC: AboutContent = {
     { name: 'Abena Osei',      role: 'Lead Gift Designer',          bio: 'Abena brings creativity and colour to our collections — from seasonal hampers to bespoke corporate gift sets.' },
     { name: 'Kofi Asante',     role: 'Customer Experience Manager', bio: 'Kofi champions every customer journey, ensuring satisfaction from first click to final delivery.' },
   ],
+  story: {
+    eyebrow: 'Our Story',
+    heading: 'Built to Keep Ghana’s Shelves Stocked',
+    paragraphs: [
+      'KW Enterprise started as a small distribution outfit supplying everyday essentials to neighbourhood shops across Accra. What began with a single van and a handful of trusted retailers quickly grew into a dependable supply partner for businesses right across the region.',
+      'Today we move fast-moving consumer goods — from food and beverages to household and personal-care lines — at scale, connecting leading manufacturers with the wholesalers, retailers and institutions who rely on consistent stock and fair pricing.',
+      'Reliability is at the heart of everything we do. Efficient warehousing, careful inventory management and a committed delivery team mean our partners get the right products, in the right quantities, exactly when they need them.',
+    ],
+    image_url: '',
+    badge_value: '5+ yrs',
+    badge_label: 'of dependable FMCG distribution',
+    highlights: [
+      'Trusted nationwide network',
+      'Reliable, on-time delivery',
+      'Competitive wholesale pricing',
+    ],
+  },
 };
+
+// Merge CMS story content over defaults; fall back per-field so partial edits still render.
+function mergeStory(raw?: AboutStory): Required<Omit<AboutStory, 'image_url'>> & { image_url?: string } {
+  const def = STATIC.story as AboutStory;
+  return {
+    eyebrow:     raw?.eyebrow?.trim()         || def.eyebrow     || 'Our Story',
+    heading:     raw?.heading?.trim()         || def.heading     || '',
+    paragraphs:  raw?.paragraphs?.length      ? raw.paragraphs   : (def.paragraphs ?? []),
+    image_url:   raw?.image_url?.trim()       || def.image_url   || '',
+    badge_value: raw?.badge_value?.trim()     || def.badge_value || '',
+    badge_label: raw?.badge_label?.trim()     || def.badge_label || '',
+    highlights:  raw?.highlights?.length      ? raw.highlights   : (def.highlights ?? []),
+  };
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 export default function AboutPage() {
@@ -78,6 +125,7 @@ export default function AboutPage() {
     vision:  raw.vision         ?? STATIC.vision,
     values:  raw.values?.length ? raw.values  : STATIC.values,
     team:    raw.team?.length   ? raw.team    : STATIC.team,
+    story:   mergeStory(raw.story),
   };
 
   return (
@@ -134,46 +182,44 @@ export default function AboutPage() {
       <section className="container mx-auto px-4 py-16">
         <div className="grid md:grid-cols-2 gap-10 items-center">
           <div>
-            <span className="text-amber-600 text-sm font-medium uppercase tracking-widest">Our Story</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mt-2 mb-4 text-balance">
-              Born from a Passion for Meaningful Gifting
-            </h2>
+            {c.story?.eyebrow && (
+              <span className="text-amber-600 text-sm font-medium uppercase tracking-widest">{c.story.eyebrow}</span>
+            )}
+            {c.story?.heading && (
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mt-2 mb-4 text-balance">
+                {c.story.heading}
+              </h2>
+            )}
             <div className="space-y-4 text-gray-600 leading-relaxed text-pretty">
-              <p>
-                Kosi Wraps began in a small apartment in East Legon, Accra, where our founder Akosua Mensah spent weekends crafting personalised gift hampers for friends and family. Word spread quickly — her thoughtful curation and beautiful presentation were unlike anything available in the local market.
-              </p>
-              <p>
-                What started as a weekend passion project grew into a thriving gifting business, serving individuals, families and leading corporations across Ghana. Today, we operate from our dedicated workshop in Accra, with a growing team of creatives, logistics specialists and customer-care champions.
-              </p>
-              <p>
-                Every item we carry is hand-selected for quality. Every box is assembled with care. Every delivery is tracked and confirmed. Because for us, it's never just a gift — it's a message.
-              </p>
-            </div>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              {[
-                { icon: CheckCircle2, text: 'Hand-curated products' },
-                { icon: CheckCircle2, text: 'Same-day delivery available' },
-                { icon: CheckCircle2, text: 'Fully customisable hampers' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm text-gray-700">
-                  <item.icon className="w-4 h-4 text-amber-500 shrink-0" />
-                  {item.text}
-                </div>
+              {(c.story?.paragraphs ?? []).map((p, i) => (
+                <p key={i}>{p}</p>
               ))}
             </div>
+            {(c.story?.highlights?.length ?? 0) > 0 && (
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                {(c.story?.highlights ?? []).map((text, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                    <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
+                    {text}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="relative">
             <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-amber-50 shadow-lg">
               <img
-                src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=700&auto=format&fit=crop"
-                alt="Gift wrapping workshop"
+                src={resolveImageUrl(c.story?.image_url) || STORY_FALLBACK_IMAGE}
+                alt={c.story?.heading || 'Our story'}
                 className="w-full h-full object-cover"
               />
             </div>
-            <div className="absolute -bottom-4 -left-4 bg-amber-600 text-white rounded-xl p-4 shadow-lg max-w-[160px]">
-              <p className="text-2xl font-bold">5+ yrs</p>
-              <p className="text-xs text-amber-100 mt-0.5">of creating joyful gift experiences</p>
-            </div>
+            {(c.story?.badge_value || c.story?.badge_label) && (
+              <div className="absolute -bottom-4 -left-4 bg-amber-600 text-white rounded-xl p-4 shadow-lg max-w-[160px]">
+                {c.story?.badge_value && <p className="text-2xl font-bold">{c.story.badge_value}</p>}
+                {c.story?.badge_label && <p className="text-xs text-amber-100 mt-0.5">{c.story.badge_label}</p>}
+              </div>
+            )}
           </div>
         </div>
       </section>
