@@ -38,7 +38,7 @@ const DEFAULT_MODULES = [
 ];
 
 // Bump this whenever new migration steps are added so they run once per DB.
-const SCHEMA_VERSION = '7';
+const SCHEMA_VERSION = '8';
 
 // Default gift packaging options (admin can edit/add more afterwards).
 const DEFAULT_PACKAGING = [
@@ -503,6 +503,13 @@ async function runMigrations() {
     await client.query(`CREATE INDEX IF NOT EXISTS idx_blog_published ON blog_posts(is_published, published_at DESC)`);
 
     // ── 017: newsletter subscriber fields + email campaigns ───────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+        id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email      TEXT UNIQUE NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT now()
+      )
+    `);
     await client.query(`ALTER TABLE newsletter_subscribers ADD COLUMN IF NOT EXISTS name TEXT`);
     await client.query(`ALTER TABLE newsletter_subscribers ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true`);
     await client.query(`ALTER TABLE newsletter_subscribers ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'signup'`);
@@ -522,6 +529,35 @@ async function runMigrations() {
       )
     `);
 
+    // ── 018: ensure pricing-tags tables exist (admin endpoints depend on them) ─
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS pricing_tags (
+        id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name           TEXT NOT NULL,
+        slug           TEXT UNIQUE NOT NULL,
+        tag_type       TEXT NOT NULL DEFAULT 'custom' CHECK (tag_type IN ('black_friday','flash_sale','clearance','new_arrival','custom')),
+        color          TEXT NOT NULL DEFAULT '#ffffff',
+        bg_color       TEXT NOT NULL DEFAULT '#ef4444',
+        icon           TEXT DEFAULT 'Tag',
+        discount_type  TEXT CHECK (discount_type IN ('percentage','fixed','free_shipping','none')) DEFAULT 'none',
+        discount_value NUMERIC(10,2) DEFAULT 0,
+        valid_from     TIMESTAMPTZ DEFAULT now(),
+        valid_until    TIMESTAMPTZ,
+        is_active      BOOLEAN DEFAULT true,
+        description    TEXT,
+        created_at     TIMESTAMPTZ DEFAULT now(),
+        updated_at     TIMESTAMPTZ DEFAULT now()
+      )
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS product_pricing_tags (
+        product_id  UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        tag_id      UUID NOT NULL REFERENCES pricing_tags(id) ON DELETE CASCADE,
+        assigned_at TIMESTAMPTZ DEFAULT now(),
+        PRIMARY KEY (product_id, tag_id)
+      )
+    `);
+
     // ── Mark this schema version complete so the heavy body is skipped next time.
     await client.query(
       `INSERT INTO app_meta (key, value) VALUES ('schema_version', $1)
@@ -537,4 +573,22 @@ async function runMigrations() {
   }
 }
 
+// Memoised gate: ensures the schema is ready before a request touches the DB.
+// On serverless, the module-load migration is a race — the first requests after a
+// cold start can hit the DB before it finishes. Awaiting this in middleware closes
+// that race. After the first success it resolves instantly (cheap version check).
+let _migrationPromise = null;
+function ensureMigrated() {
+  if (!_migrationPromise) {
+    _migrationPromise = runMigrations().catch(err => {
+      // Allow a retry on the next request if it failed.
+      _migrationPromise = null;
+      throw err;
+    });
+  }
+  return _migrationPromise;
+}
+
 module.exports = runMigrations;
+module.exports.runMigrations = runMigrations;
+module.exports.ensureMigrated = ensureMigrated;

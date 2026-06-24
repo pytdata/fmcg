@@ -4,9 +4,9 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
-const runMigrations = require('./db/migrate');
+const { runMigrations, ensureMigrated } = require('./db/migrate');
 
-// Run migrations immediately at module load — works in both Express and Vercel serverless
+// Kick migrations off at module load (warm path)…
 runMigrations().catch(err => console.error('[startup] Migration failed:', err.message));
 
 const app = express();
@@ -37,6 +37,19 @@ app.use(morgan('dev'));
 // Serve uploaded media — use /tmp/uploads on serverless (Vercel), local uploads/ otherwise
 const UPLOADS_DIR = process.env.UPLOAD_ROOT_DIR || '/tmp/uploads';
 app.use('/uploads', express.static(UPLOADS_DIR));
+
+// ── Schema-ready gate ─────────────────────────────────────────────────────────
+// Ensure migrations have finished before any /api request touches the DB. This
+// closes the cold-start race on serverless that otherwise 500s the first requests.
+app.use('/api', async (_req, res, next) => {
+  try {
+    await ensureMigrated();
+    next();
+  } catch (err) {
+    console.error('[schema-gate] migration not ready:', err.message);
+    res.status(503).json({ error: 'Service warming up, please retry in a moment.' });
+  }
+});
 
 // ── API Routes ────────────────────────────────────────────────────────────────
 app.use('/api/setup',       require('./routes/setup'));
