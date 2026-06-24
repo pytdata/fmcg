@@ -414,6 +414,12 @@ async function runMigrations() {
       console.log(`[migrations] FMCG catalog seeded: ${CATALOG.main_categories.length} main, ${CATALOG.sub_categories.length} sub, ${inserted} products.`);
     }
 
+    // ── 013: category active/inactive status ──────────────────────────────────
+    await client.query(`
+      ALTER TABLE categories
+        ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true
+    `);
+
     console.log('[migrations] All migrations applied successfully.');
   } catch (err) {
     console.error('[migrations] Migration error:', err.message);

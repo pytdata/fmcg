@@ -21,6 +21,12 @@ export async function getCategories(): Promise<Category[]> {
   catch { return []; }
 }
 
+// Admin: all categories including inactive ones.
+export async function getAdminCategories(): Promise<Category[]> {
+  try { return await api.get<Category[]>('/api/categories/admin/all'); }
+  catch { return []; }
+}
+
 export async function getProducts(options?: {
   categorySlug?: string; featured?: boolean; search?: string; limit?: number;
 }): Promise<Product[]> {
