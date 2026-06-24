@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect, type SearchableSelectOption } from '@/components/ui/searchable-select';
 import { toast } from 'sonner';
 import {
   Plus, Pencil, Trash2, Search, Upload, X, ImageIcon, Loader2,
@@ -371,6 +371,24 @@ export default function AdminProductsPage() {
     (p.sku || '').toLowerCase().includes(search.toLowerCase()),
   );
 
+  // Build category options: top-level first, sub-categories grouped under their parent's name.
+  const categoryNameById = new Map(categories.map(c => [c.id, c.name]));
+  const categoryOptions: SearchableSelectOption[] = [
+    { value: 'none', label: 'No category' },
+    ...[...categories]
+      .sort((a, b) => {
+        const ga = a.parent_id ? categoryNameById.get(a.parent_id) ?? '' : '';
+        const gb = b.parent_id ? categoryNameById.get(b.parent_id) ?? '' : '';
+        return ga.localeCompare(gb) || a.name.localeCompare(b.name);
+      })
+      .map(c => ({
+        value: c.id,
+        label: c.name,
+        group: c.parent_id ? categoryNameById.get(c.parent_id) : undefined,
+        keywords: [c.slug],
+      })),
+  ];
+
   const openCreate = () => {
     setForm(EMPTY_FORM); setEditId(null); setActiveMedia([]); setActiveTab('details'); setOpen(true);
   };
@@ -554,13 +572,13 @@ export default function AdminProductsPage() {
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-sm">Category</Label>
-                  <Select value={form.category_id || 'none'} onValueChange={v => setForm(f => ({ ...f, category_id: v === 'none' ? '' : v }))}>
-                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No category</SelectItem>
-                      {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    value={form.category_id || 'none'}
+                    onValueChange={v => setForm(f => ({ ...f, category_id: v === 'none' ? '' : v }))}
+                    options={categoryOptions}
+                    placeholder="Select category"
+                    searchPlaceholder="Search categories…"
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-sm">SKU</Label>

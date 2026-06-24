@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import {
@@ -233,12 +233,14 @@ export default function ContactPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm font-normal">Subject <span className="text-red-500">*</span></Label>
-                    <Select value={subject} onValueChange={setSubject} required>
-                      <SelectTrigger className="h-11"><SelectValue placeholder="Select a subject" /></SelectTrigger>
-                      <SelectContent>
-                        {SUBJECTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <SearchableSelect
+                      value={subject}
+                      onValueChange={setSubject}
+                      options={SUBJECTS.map(s => ({ value: s, label: s }))}
+                      placeholder="Select a subject"
+                      searchPlaceholder="Search subjects…"
+                      className="h-11"
+                    />
                   </div>
                 </div>
 

@@ -5,7 +5,7 @@ import { getCategories, getProducts } from '@/services/store';
 import Seo from '@/components/common/Seo';
 import ProductCard from '@/components/common/ProductCard';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Search, SlidersHorizontal, Tag, Package, ChevronDown } from 'lucide-react';
 import type { Category, Product } from '@/types/index';
@@ -262,15 +262,19 @@ export default function ShopPage() {
                   className="pl-9 w-full sm:w-48"
                 />
               </div>
-              <Select value={sort} onValueChange={setSort}>
-                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={sort}
+                onValueChange={setSort}
+                options={[
+                  { value: 'newest', label: 'Newest' },
+                  { value: 'price-low', label: 'Price: Low to High' },
+                  { value: 'price-high', label: 'Price: High to Low' },
+                  { value: 'name', label: 'Name' },
+                ]}
+                placeholder="Sort by…"
+                searchPlaceholder="Search…"
+                className="w-36"
+              />
             </div>
           </div>
 

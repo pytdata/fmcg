@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import {
@@ -333,16 +333,18 @@ function PricingTagsTab() {
 
             <div className="space-y-1">
               <Label className="text-sm">Tag Type</Label>
-              <Select value={form.tag_type || 'custom'} onValueChange={v => { setForm(f => ({ ...f, tag_type: v as PricingTag['tag_type'] })); applyPreset(v); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="black_friday">Black Friday</SelectItem>
-                  <SelectItem value="flash_sale">Flash Sale</SelectItem>
-                  <SelectItem value="clearance">Clearance</SelectItem>
-                  <SelectItem value="new_arrival">New Arrival</SelectItem>
-                  <SelectItem value="custom">Custom</SelectItem>
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={form.tag_type || 'custom'}
+                onValueChange={v => { setForm(f => ({ ...f, tag_type: v as PricingTag['tag_type'] })); applyPreset(v); }}
+                searchPlaceholder="Search type…"
+                options={[
+                  { value: 'black_friday', label: 'Black Friday' },
+                  { value: 'flash_sale', label: 'Flash Sale' },
+                  { value: 'clearance', label: 'Clearance' },
+                  { value: 'new_arrival', label: 'New Arrival' },
+                  { value: 'custom', label: 'Custom' },
+                ]}
+              />
             </div>
 
             <div className="space-y-1">
@@ -368,12 +370,12 @@ function PricingTagsTab() {
               </div>
               <div className="space-y-1">
                 <Label className="text-sm">Icon</Label>
-                <Select value={form.icon || 'Tag'} onValueChange={v => setForm(f => ({ ...f, icon: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {ICON_OPTIONS.map(i => <SelectItem key={i.key} value={i.key}>{i.key}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={form.icon || 'Tag'}
+                  onValueChange={v => setForm(f => ({ ...f, icon: v }))}
+                  searchPlaceholder="Search icon…"
+                  options={ICON_OPTIONS.map(i => ({ value: i.key, label: i.key }))}
+                />
               </div>
             </div>
 
@@ -381,15 +383,17 @@ function PricingTagsTab() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-sm">Discount Type</Label>
-                <Select value={form.discount_type || 'none'} onValueChange={v => setForm(f => ({ ...f, discount_type: v as PricingTag['discount_type'] }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None (label only)</SelectItem>
-                    <SelectItem value="percentage">Percentage (%)</SelectItem>
-                    <SelectItem value="fixed">Fixed (GHS)</SelectItem>
-                    <SelectItem value="free_shipping">Free Shipping</SelectItem>
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={form.discount_type || 'none'}
+                  onValueChange={v => setForm(f => ({ ...f, discount_type: v as PricingTag['discount_type'] }))}
+                  searchPlaceholder="Search type…"
+                  options={[
+                    { value: 'none', label: 'None (label only)' },
+                    { value: 'percentage', label: 'Percentage (%)' },
+                    { value: 'fixed', label: 'Fixed (GHS)' },
+                    { value: 'free_shipping', label: 'Free Shipping' },
+                  ]}
+                />
               </div>
               {(form.discount_type === 'percentage' || form.discount_type === 'fixed') && (
                 <div className="space-y-1">
@@ -679,14 +683,16 @@ function CouponsTab() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-sm">Discount Type *</Label>
-                <Select value={form.discount_type || 'percentage'} onValueChange={v => setForm(f => ({ ...f, discount_type: v as Promotion['discount_type'] }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percentage">Percentage (%)</SelectItem>
-                    <SelectItem value="fixed">Fixed Amount (GHS)</SelectItem>
-                    <SelectItem value="free_shipping">Free Shipping</SelectItem>
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={form.discount_type || 'percentage'}
+                  onValueChange={v => setForm(f => ({ ...f, discount_type: v as Promotion['discount_type'] }))}
+                  searchPlaceholder="Search type…"
+                  options={[
+                    { value: 'percentage', label: 'Percentage (%)' },
+                    { value: 'fixed', label: 'Fixed Amount (GHS)' },
+                    { value: 'free_shipping', label: 'Free Shipping' },
+                  ]}
+                />
               </div>
               {form.discount_type !== 'free_shipping' && (
                 <div className="space-y-1">
@@ -722,14 +728,16 @@ function CouponsTab() {
 
             <div className="space-y-1">
               <Label className="text-sm">Applies To</Label>
-              <Select value={form.applies_to || 'all'} onValueChange={v => setForm(f => ({ ...f, applies_to: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Orders</SelectItem>
-                  <SelectItem value="products">Products Only</SelectItem>
-                  <SelectItem value="gift_boxes">Gift Boxes Only</SelectItem>
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={form.applies_to || 'all'}
+                onValueChange={v => setForm(f => ({ ...f, applies_to: v }))}
+                searchPlaceholder="Search…"
+                options={[
+                  { value: 'all', label: 'All Orders' },
+                  { value: 'products', label: 'Products Only' },
+                  { value: 'gift_boxes', label: 'Gift Boxes Only' },
+                ]}
+              />
             </div>
 
             <div className="flex items-center gap-2">

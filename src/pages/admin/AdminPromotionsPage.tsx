@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import type { Promotion } from '@/types/index';
@@ -105,13 +105,15 @@ export default function AdminPromotionsPage() {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label className="text-sm font-normal">Discount Type</Label>
-          <Select value={form.discount_type} onValueChange={v => setForm({ ...form, discount_type: v })}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="percentage">Percentage (%)</SelectItem>
-              <SelectItem value="fixed">Fixed (GHS)</SelectItem>
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            value={form.discount_type}
+            onValueChange={v => setForm({ ...form, discount_type: v })}
+            searchPlaceholder="Search type…"
+            options={[
+              { value: 'percentage', label: 'Percentage (%)' },
+              { value: 'fixed', label: 'Fixed (GHS)' },
+            ]}
+          />
         </div>
         <div><Label className="text-sm font-normal">Discount Value *</Label><Input type="number" value={form.discount_value} onChange={e => setForm({ ...form, discount_value: e.target.value })} /></div>
       </div>
@@ -125,14 +127,16 @@ export default function AdminPromotionsPage() {
       </div>
       <div>
         <Label className="text-sm font-normal">Applies To</Label>
-        <Select value={form.applies_to} onValueChange={v => setForm({ ...form, applies_to: v })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Orders</SelectItem>
-            <SelectItem value="products">Products Only</SelectItem>
-            <SelectItem value="gift_boxes">Gift Boxes Only</SelectItem>
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          value={form.applies_to}
+          onValueChange={v => setForm({ ...form, applies_to: v })}
+          searchPlaceholder="Search…"
+          options={[
+            { value: 'all', label: 'All Orders' },
+            { value: 'products', label: 'Products Only' },
+            { value: 'gift_boxes', label: 'Gift Boxes Only' },
+          ]}
+        />
       </div>
       <div className="flex items-center gap-2"><Switch checked={form.is_active} onCheckedChange={v => setForm({ ...form, is_active: v })} /><Label className="text-sm font-normal">Active</Label></div>
       <Button onClick={save} disabled={loading} className="w-full bg-amber-600 hover:bg-amber-700">{loading ? 'Saving…' : 'Save Promotion'}</Button>
