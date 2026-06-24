@@ -245,3 +245,73 @@ export interface NewsletterSubscriber {
   id: string;
   email: string;
 }
+
+// ── New feature types ─────────────────────────────────────────────────────────
+export interface SiteModule {
+  key: string;
+  label: string;
+  description?: string;
+  enabled: boolean;
+  sort_order: number;
+}
+
+export interface Brand {
+  id: string;
+  name: string;
+  logo_url?: string;
+  website_url?: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  role?: string;
+  photo_url?: string;
+  bio?: string;
+  email?: string;
+  linkedin_url?: string;
+  twitter_url?: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface SeoMeta {
+  path: string;
+  title?: string;
+  meta_title?: string;
+  meta_description?: string;
+  keywords?: string;
+  og_image?: string;
+  canonical_url?: string;
+  h1?: string;
+  focus_keyword?: string;
+  noindex: boolean;
+  score: number;
+  updated_at?: string;
+}
+
+export interface SeoAuditCheck {
+  id: string;
+  label: string;
+  status: 'pass' | 'warn' | 'fail';
+  detail?: string;
+  weight: number;
+}
+
+export interface SeoAuditResult {
+  path: string;
+  score: number;
+  checks: SeoAuditCheck[];
+}
+
+export interface AnalyticsSummary {
+  totals: { pageviews: number; visitors: number; events: number };
+  series: { date: string; pageviews: number; visitors: number }[];
+  top_pages: { path: string; views: number }[];
+  referrers: { referrer: string; count: number }[];
+  devices: { device: string; count: number }[];
+}

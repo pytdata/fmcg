@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCategories, getProducts } from '@/services/store';
+import Seo from '@/components/common/Seo';
 import ProductCard from '@/components/common/ProductCard';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -56,6 +57,7 @@ function CategorySidebar({
 
   return (
     <div className="space-y-0.5">
+      <Seo path="/shop" title="Shop FMCG Products — KW Enterprise" description="Browse hundreds of quality FMCG products across personal care, home care, food and more. Fast, reliable delivery across Ghana." />
       {/* All Products */}
       <button
         type="button"

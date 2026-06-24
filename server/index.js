@@ -43,6 +43,11 @@ app.use('/api/wishlist',    require('./routes/wishlist'));
 app.use('/api/pages',        require('./routes/pages'));
 app.use('/api/media',        require('./routes/media'));
 app.use('/api/pricing-tags', require('./routes/pricingTags'));
+app.use('/api/modules',     require('./routes/modules'));
+app.use('/api/brands',      require('./routes/brands'));
+app.use('/api/team',        require('./routes/team'));
+app.use('/api/analytics',   require('./routes/analytics'));
+app.use('/api/seo',         require('./routes/seo'));
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));

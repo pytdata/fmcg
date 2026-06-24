@@ -1,5 +1,20 @@
 import { api } from '@/lib/api';
-import type { Product, Category, Banner, GiftBox, Promotion, SiteSettings, Order } from '@/types/index';
+import type { Product, Category, Banner, GiftBox, Promotion, SiteSettings, Order, Brand, TeamMember, SeoMeta } from '@/types/index';
+
+export async function getBrands(): Promise<Brand[]> {
+  try { return await api.get<Brand[]>('/api/brands'); }
+  catch { return []; }
+}
+
+export async function getTeam(): Promise<TeamMember[]> {
+  try { return await api.get<TeamMember[]>('/api/team'); }
+  catch { return []; }
+}
+
+export async function getSeoMeta(path: string): Promise<SeoMeta | null> {
+  try { return await api.get<SeoMeta>(`/api/seo/meta?path=${encodeURIComponent(path)}`); }
+  catch { return null; }
+}
 
 export async function getCategories(): Promise<Category[]> {
   try { return await api.get<Category[]>('/api/categories'); }

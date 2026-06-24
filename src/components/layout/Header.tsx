@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
+import { useModules } from '@/contexts/ModulesContext';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ShoppingCart, Menu, Search, User, Heart, Gift, Package, LogOut, ChevronDown, X } from 'lucide-react';
 
 export default function Header() {
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { cartCount } = useCart();
+  const { isEnabled } = useModules();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -22,10 +24,10 @@ export default function Header() {
   const navLinks = [
     { label: 'Home', path: '/' },
     { label: 'Shop', path: '/shop' },
-    { label: 'Gift Boxes', path: '/gift-boxes' },
-    { label: 'Contact', path: '/contact' },
-    { label: 'Services', path: '/services' },
+    ...(isEnabled('gift_boxes') ? [{ label: 'Gift Boxes', path: '/gift-boxes' }] : []),
     { label: 'About', path: '/about' },
+    ...(isEnabled('services_page') ? [{ label: 'Services', path: '/services' }] : []),
+    { label: 'Contact', path: '/contact' },
   ];
 
   return (
@@ -64,11 +66,6 @@ export default function Header() {
 
             {user ? (
               <div className="hidden sm:flex items-center gap-1">
-                {isAdmin && (
-                  <Link to="/admin">
-                    <Button variant="ghost" size="sm" className="text-gray-700">Admin</Button>
-                  </Link>
-                )}
                 <div className="relative group">
                   <div className="flex items-center gap-1 text-gray-700 text-sm font-medium px-3 py-1.5 rounded-md cursor-pointer hover:bg-gray-50">
                     <User className="w-4 h-4" />
@@ -115,7 +112,6 @@ export default function Header() {
                         <Link to="/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm hover:bg-gray-100"><User className="w-4 h-4" /> Profile</Link>
                         <Link to="/orders" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm hover:bg-gray-100"><Package className="w-4 h-4" /> Orders</Link>
                         <Link to="/wishlist" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm hover:bg-gray-100"><Heart className="w-4 h-4" /> Wishlist</Link>
-                        {isAdmin && <Link to="/admin" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm hover:bg-gray-100"><Package className="w-4 h-4" /> Admin</Link>}
                         <button onClick={() => { signOut(); setMobileOpen(false); }} className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm text-red-600 hover:bg-gray-100 w-full text-left"><LogOut className="w-4 h-4" /> Sign Out</button>
                       </>
                     ) : (
@@ -138,9 +134,11 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
-          <Link to="/gift-boxes/custom" className="text-sm font-medium text-emerald-700 hover:text-emerald-800 transition-colors flex items-center gap-1">
-            <Gift className="w-3.5 h-3.5" /> Build Your Gift Box
-          </Link>
+          {isEnabled('custom_gift_box') && (
+            <Link to="/gift-boxes/custom" className="text-sm font-medium text-emerald-700 hover:text-emerald-800 transition-colors flex items-center gap-1">
+              <Gift className="w-3.5 h-3.5" /> Build Your Gift Box
+            </Link>
+          )}
         </nav>
       </div>
     </header>
