@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { toast } from 'sonner';
 import { ArrowLeft, Banknote, CreditCard, Loader2, MapPin, Ticket, Truck, X } from 'lucide-react';
 import type { DeliveryLocation } from '@/types/index';
@@ -310,44 +310,18 @@ export default function CheckoutPage() {
                 No delivery locations configured yet. Contact us to arrange delivery.
               </div>
             ) : (
-              <div className="space-y-2">
-                {deliveryLocations.map(loc => {
-                  const selected = selectedLocationId === loc.id;
-                  return (
-                    <button
-                      key={loc.id}
-                      type="button"
-                      onClick={() => handleLocationChange(loc.id)}
-                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg border transition-colors text-left
-                        ${selected
-                          ? 'border-amber-600 bg-amber-50 shadow-sm'
-                          : 'border-gray-200 hover:bg-gray-50'}`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0
-                          ${selected ? 'border-amber-600' : 'border-gray-300'}`}>
-                          {selected && <div className="w-2 h-2 rounded-full bg-amber-600" />}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900">{loc.name}</p>
-                          {loc.region && <p className="text-xs text-gray-500">{loc.region}</p>}
-                        </div>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        {Number(loc.delivery_fee) === 0 ? (
-                          <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
-                            Free
-                          </span>
-                        ) : (
-                          <span className="text-sm font-semibold text-gray-900">
-                            GHS {Number(loc.delivery_fee).toFixed(2)}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              <SearchableSelect
+                value={selectedLocationId}
+                onValueChange={handleLocationChange}
+                options={deliveryLocations.map(loc => ({
+                  value: loc.id,
+                  label: `${loc.name} — ${Number(loc.delivery_fee) === 0 ? 'Free' : `GHS ${Number(loc.delivery_fee).toFixed(2)}`}`,
+                  keywords: loc.region ? [loc.region] : undefined,
+                }))}
+                placeholder="Select your delivery area"
+                searchPlaceholder="Search locations…"
+                className="w-full"
+              />
             )}
           </div>
 

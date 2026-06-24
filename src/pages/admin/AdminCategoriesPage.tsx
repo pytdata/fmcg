@@ -12,9 +12,8 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { SearchableSelect, type SearchableSelectOption } from '@/components/ui/searchable-select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
@@ -34,10 +33,10 @@ function slugify(s: string) {
 type CategoryForm = {
   id?: string;
   name: string; slug: string; description: string;
-  image_url: string; sort_order: number; parent_id: string;
+  image_url: string; sort_order: number; parent_id: string; is_active: boolean;
 };
 const EMPTY: CategoryForm = {
-  name: '', slug: '', description: '', image_url: '', sort_order: 0, parent_id: '',
+  name: '', slug: '', description: '', image_url: '', sort_order: 0, parent_id: '', is_active: true,
 };
 
 function buildTree(flat: Category[]): Category[] {
@@ -58,11 +57,30 @@ function buildTree(flat: Category[]): Category[] {
 }
 
 // ── Sub-category row (inside accordion) ──────────────────────────────────────
-function SubCategoryRow({
-  cat, onEdit, onDelete,
-}: { cat: Category; onEdit: (c: Category) => void; onDelete: (c: Category) => void }) {
+function StatusBadge({ active }: { active: boolean }) {
   return (
-    <div className="flex items-center gap-3 py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors group ml-4 border-l-2 border-amber-100">
+    <Badge
+      variant="outline"
+      className={active
+        ? 'text-[10px] px-1.5 py-0 border-emerald-200 bg-emerald-50 text-emerald-700'
+        : 'text-[10px] px-1.5 py-0 border-gray-200 bg-gray-100 text-gray-500'}
+    >
+      {active ? 'Active' : 'Inactive'}
+    </Badge>
+  );
+}
+
+function SubCategoryRow({
+  cat, onEdit, onDelete, onToggle,
+}: {
+  cat: Category;
+  onEdit: (c: Category) => void;
+  onDelete: (c: Category) => void;
+  onToggle: (c: Category) => void;
+}) {
+  const active = cat.is_active ?? true;
+  return (
+    <div className={`flex items-center gap-3 py-2.5 px-3 rounded-lg hover:bg-gray-50 transition-colors group ml-4 border-l-2 border-amber-100 ${active ? '' : 'opacity-60'}`}>
       <ChevronRight className="w-3 h-3 text-amber-300 shrink-0" />
       {cat.image_url ? (
         <img src={cat.image_url} alt={cat.name}
@@ -74,13 +92,21 @@ function SubCategoryRow({
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800 truncate">{cat.name}</p>
+        <div className="flex items-center gap-2 min-w-0">
+          <p className="text-sm font-medium text-gray-800 truncate">{cat.name}</p>
+          <StatusBadge active={active} />
+        </div>
         <p className="text-xs text-gray-400 truncate">{cat.slug}</p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full flex items-center gap-1">
           <Package className="w-3 h-3" />{cat.product_count ?? 0}
         </span>
+        <Switch
+          checked={active}
+          onCheckedChange={() => onToggle(cat)}
+          aria-label={active ? 'Deactivate category' : 'Activate category'}
+        />
         <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
           <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0"
             onClick={() => onEdit(cat)}>
@@ -98,19 +124,21 @@ function SubCategoryRow({
 
 // ── Top-level category accordion item ────────────────────────────────────────
 function CategoryAccordionItem({
-  cat, onEdit, onDelete, onAddSub,
+  cat, onEdit, onDelete, onAddSub, onToggle,
 }: {
   cat: Category;
   onEdit: (c: Category) => void;
   onDelete: (c: Category) => void;
   onAddSub: (parent: Category) => void;
+  onToggle: (c: Category) => void;
 }) {
   const hasChildren = (cat.children?.length ?? 0) > 0;
+  const active = cat.is_active ?? true;
   const totalProducts = (cat.product_count ?? 0) +
     (cat.children?.reduce((sum, c) => sum + (c.product_count ?? 0), 0) ?? 0);
 
   return (
-    <AccordionItem value={cat.id} className="border rounded-xl mb-2 overflow-hidden shadow-sm">
+    <AccordionItem value={cat.id} className={`border rounded-xl mb-2 overflow-hidden shadow-sm ${active ? '' : 'opacity-60'}`}>
       <div className="flex items-center gap-0 bg-white hover:bg-gray-50/60 transition-colors">
         {/* Expand trigger — only shown if has children */}
         {hasChildren ? (
@@ -135,6 +163,7 @@ function CategoryAccordionItem({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <p className="text-sm font-semibold text-gray-900 truncate">{cat.name}</p>
+              <StatusBadge active={active} />
               {hasChildren && (
                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
                   {cat.children!.length} sub
@@ -147,6 +176,11 @@ function CategoryAccordionItem({
             <span className="text-xs text-gray-500 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full flex items-center gap-1">
               <Package className="w-3 h-3 text-amber-500" />{totalProducts}
             </span>
+            <Switch
+              checked={active}
+              onCheckedChange={() => onToggle(cat)}
+              aria-label={active ? 'Deactivate category' : 'Activate category'}
+            />
             <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50 gap-1"
               onClick={() => onAddSub(cat)}>
               <Plus className="w-3 h-3" /> Sub
@@ -167,7 +201,7 @@ function CategoryAccordionItem({
         <AccordionContent className="pb-0">
           <div className="bg-gray-50/50 border-t px-3 py-2 space-y-0.5">
             {cat.children!.map(child => (
-              <SubCategoryRow key={child.id} cat={child} onEdit={onEdit} onDelete={onDelete} />
+              <SubCategoryRow key={child.id} cat={child} onEdit={onEdit} onDelete={onDelete} onToggle={onToggle} />
             ))}
           </div>
         </AccordionContent>
@@ -196,7 +230,7 @@ export default function AdminCategoriesPage() {
 
   const load = () => {
     setLoading(true);
-    api.get<Category[]>('/api/categories')
+    api.get<Category[]>('/api/categories/admin/all')
       .then(data => {
         const arr = Array.isArray(data) ? data : [];
         setFlat(arr);
@@ -223,6 +257,7 @@ export default function AdminCategoriesPage() {
       id: cat.id, name: cat.name, slug: cat.slug,
       description: cat.description || '', image_url: cat.image_url || '',
       sort_order: cat.sort_order, parent_id: cat.parent_id || '',
+      is_active: cat.is_active ?? true,
     });
     setSlugTouched(true);
     setDialogOpen(true);
@@ -241,6 +276,7 @@ export default function AdminCategoriesPage() {
       image_url: form.image_url || null,
       sort_order: form.sort_order,
       parent_id: form.parent_id || null,
+      is_active: form.is_active,
     };
     try {
       if (form.id) {
@@ -268,8 +304,25 @@ export default function AdminCategoriesPage() {
     } catch { toast.error('Failed to delete category'); }
   };
 
+  const handleToggleActive = async (cat: Category) => {
+    const next = !(cat.is_active ?? true);
+    try {
+      await api.patch(`/api/categories/${cat.id}/active`, { is_active: next });
+      toast.success(next ? 'Category activated' : 'Category hidden from website');
+      load();
+    } catch { toast.error('Failed to update status'); }
+  };
+
   // Top-level parents (for parent selector, excluding self)
   const parentOptions = flat.filter(c => !c.parent_id && c.id !== form.id);
+  const parentSelectOptions: SearchableSelectOption[] = [
+    { value: 'none', label: 'Top-level (no parent)' },
+    ...parentOptions.map(p => ({
+      value: p.id,
+      label: p.name,
+      keywords: [p.slug],
+    })),
+  ];
 
   return (
     <div className="space-y-5">
@@ -344,6 +397,7 @@ export default function AdminCategoriesPage() {
               onEdit={openEdit}
               onDelete={setDeleteTarget}
               onAddSub={openCreate}
+              onToggle={handleToggleActive}
             />
           ))}
         </Accordion>
@@ -370,16 +424,13 @@ export default function AdminCategoriesPage() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-normal">Parent Category</Label>
-              <Select value={form.parent_id || 'none'}
-                onValueChange={v => setForm(f => ({ ...f, parent_id: v === 'none' ? '' : v }))}>
-                <SelectTrigger><SelectValue placeholder="Top-level (no parent)" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Top-level (no parent)</SelectItem>
-                  {parentOptions.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                value={form.parent_id || 'none'}
+                onValueChange={v => setForm(f => ({ ...f, parent_id: v === 'none' ? '' : v }))}
+                options={parentSelectOptions}
+                placeholder="Top-level (no parent)"
+                searchPlaceholder="Search categories…"
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-normal">Description</Label>
@@ -403,6 +454,22 @@ export default function AdminCategoriesPage() {
                 className="w-full h-24 object-cover rounded-lg border"
                 onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
             )}
+            <div className="rounded-lg border bg-gray-50/60 p-3 space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <Label className="text-sm font-normal">Active</Label>
+                  <p className="text-xs text-gray-400">Visible on the website</p>
+                </div>
+                <Switch
+                  checked={form.is_active}
+                  onCheckedChange={v => setForm(f => ({ ...f, is_active: v }))}
+                  aria-label="Category active status"
+                />
+              </div>
+              <p className="text-xs text-gray-400">
+                Inactive categories and their sub-categories are hidden from the website.
+              </p>
+            </div>
           </div>
           <div className="flex justify-end gap-2 mt-4">
             <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Cancel</Button>

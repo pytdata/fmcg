@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -54,14 +54,16 @@ export default function AdminOrdersPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map(s => (
-              <SelectItem key={s} value={s}>{s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          value={filter}
+          onValueChange={setFilter}
+          className="w-36"
+          searchPlaceholder="Search status…"
+          options={['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map(s => ({
+            value: s,
+            label: s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1),
+          }))}
+        />
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
@@ -94,25 +96,29 @@ export default function AdminOrdersPage() {
                   {updatingId === o.id
                     ? <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
                     : (
-                      <Select value={o.status} onValueChange={v => updateStatus(o, v)}>
-                        <SelectTrigger className={`h-7 text-xs border-0 ${statusColors[o.status]}`}><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map(s => (
-                            <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <SearchableSelect
+                        value={o.status}
+                        onValueChange={v => updateStatus(o, v)}
+                        className={`h-7 text-xs border-0 capitalize ${statusColors[o.status]}`}
+                        searchPlaceholder="Search status…"
+                        options={['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map(s => ({
+                          value: s,
+                          label: s.charAt(0).toUpperCase() + s.slice(1),
+                        }))}
+                      />
                     )}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
-                  <Select value={o.payment_status} onValueChange={v => updatePayment(o.id, v)}>
-                    <SelectTrigger className="h-7 text-xs border-0 bg-gray-50"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {['pending', 'paid', 'failed', 'refunded'].map(s => (
-                        <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    value={o.payment_status}
+                    onValueChange={v => updatePayment(o.id, v)}
+                    className="h-7 text-xs border-0 bg-gray-50"
+                    searchPlaceholder="Search status…"
+                    options={['pending', 'paid', 'failed', 'refunded'].map(s => ({
+                      value: s,
+                      label: s.charAt(0).toUpperCase() + s.slice(1),
+                    }))}
+                  />
                 </td>
                 <td className="px-4 py-3 text-right font-semibold whitespace-nowrap">
                   GHS {Number(o.total_amount || 0).toFixed(2)}
