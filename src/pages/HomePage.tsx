@@ -84,11 +84,25 @@ const PROMO_COLOURS = [
 ];
 
 // ── Dummy hero banners (used when no banners are configured in the admin) ──────
+// FMCG toiletries / household & personal-care distribution — not groceries.
 const DEMO_BANNERS: Banner[] = [
-  { id: 'demo-1', title: 'Premium FMCG Products Delivered to You', subtitle: 'Quality groceries, beverages and household essentials at unbeatable prices across Ghana.', image_url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1600&q=80', link: '/shop', button_text: 'Shop Now', sort_order: 0, is_active: true },
-  { id: 'demo-2', title: 'Your Trusted Wholesale & Retail Partner', subtitle: 'From household care to personal care — stocked, priced right and delivered fast.', image_url: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=1600&q=80', link: '/shop', button_text: 'Browse Products', sort_order: 1, is_active: true },
-  { id: 'demo-3', title: 'Fast & Reliable Delivery', subtitle: 'Same-day delivery in Accra. We bring the supermarket to your doorstep.', image_url: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=1600&q=80', link: '/contact', button_text: 'Partner With Us', sort_order: 2, is_active: true },
+  { id: 'demo-1', title: 'Personal Care & Beauty Essentials', subtitle: 'Soaps, bath gels, lotions, deodorants and oral care from the brands people trust.', image_url: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=1600&q=80', link: '/shop', button_text: 'Shop Now', sort_order: 0, is_active: true },
+  { id: 'demo-2', title: 'Home Care & Cleaning Supplies', subtitle: 'Detergents, dishwash, disinfectants, fresheners and more — for every home.', image_url: 'https://images.unsplash.com/photo-1563453392212-326f5e854473?w=1600&q=80', link: '/shop', button_text: 'Browse Products', sort_order: 1, is_active: true },
+  { id: 'demo-3', title: 'Your Trusted Wholesale Distributor', subtitle: 'Stocked, priced right and delivered fast to retailers and homes across Ghana.', image_url: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1600&q=80', link: '/contact', button_text: 'Partner With Us', sort_order: 2, is_active: true },
+  { id: 'demo-4', title: 'Trusted Brands, Everyday Essentials', subtitle: 'Toiletries, fragrances, stationery and household must-haves all in one place.', image_url: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1600&q=80', link: '/shop', button_text: 'Explore Range', sort_order: 3, is_active: true },
+  { id: 'demo-5', title: 'Fast & Reliable Delivery', subtitle: 'Same-day delivery in Accra — we bring the essentials straight to your door.', image_url: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=1600&q=80', link: '/shop', button_text: 'Order Now', sort_order: 4, is_active: true },
 ];
+
+// Pick n random items from an array (Fisher–Yates, non-mutating).
+function pickRandom<T>(arr: T[], n: number): T[] {
+  if (arr.length <= n) return arr;
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 export default function HomePage() {
@@ -98,8 +112,18 @@ export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [giftBoxes, setGiftBoxes] = useState<GiftBox[]>([]);
+  const [displayCats, setDisplayCats] = useState<Category[]>([]);
   const [email, setEmail] = useState('');
   const [subscribing, setSubscribing] = useState(false);
+
+  // Show 4 random top-level categories, re-shuffled every 30 seconds.
+  useEffect(() => {
+    const tops = categories.filter(c => !c.parent_id);
+    if (!tops.length) { setDisplayCats([]); return; }
+    setDisplayCats(pickRandom(tops, 4));
+    const id = setInterval(() => setDisplayCats(pickRandom(tops, 4)), 30_000);
+    return () => clearInterval(id);
+  }, [categories]);
 
   useEffect(() => {
     // Load CMS content
@@ -136,7 +160,6 @@ export default function HomePage() {
   const flashSale = { ...DEFAULT_CONTENT.flash_sale, ...cms.flash_sale };
 
   // Only show top-level categories (no parent)
-  const topCategories = categories.filter(c => !c.parent_id);
 
   return (
     <div className="space-y-0 pb-0">
@@ -213,8 +236,8 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ── Categories ── */}
-      {isEnabled('categories_section') && topCategories.length > 0 && (
+      {/* ── Categories (4 random, rotating every 30s) ── */}
+      {isEnabled('categories_section') && displayCats.length > 0 && (
         <section className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-5">
             <div>
@@ -225,8 +248,8 @@ export default function HomePage() {
               All <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {topCategories.map(c => <CategoryCard key={c.id} category={c} />)}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {displayCats.map(c => <CategoryCard key={c.id} category={c} />)}
           </div>
         </section>
       )}
