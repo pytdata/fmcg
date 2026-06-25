@@ -2,16 +2,34 @@
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+// Separate sessions for the storefront and the admin portal so logging into one
+// never authenticates the other (even in the same browser tab).
+export const CUSTOMER_TOKEN_KEY = 'kw_token';
+export const ADMIN_TOKEN_KEY = 'kw_admin_token';
+
+function isAdminArea(): boolean {
+  return typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+}
+
+// Default token for generic data calls — picked by which area made the request.
 function getToken(): string | null {
-  return localStorage.getItem('kw_token');
+  return localStorage.getItem(isAdminArea() ? ADMIN_TOKEN_KEY : CUSTOMER_TOKEN_KEY);
 }
 
+// Customer (storefront) session helpers
 export function setToken(token: string) {
-  localStorage.setItem('kw_token', token);
+  localStorage.setItem(CUSTOMER_TOKEN_KEY, token);
+}
+export function clearToken() {
+  localStorage.removeItem(CUSTOMER_TOKEN_KEY);
 }
 
-export function clearToken() {
-  localStorage.removeItem('kw_token');
+// Admin (portal) session helpers
+export function setAdminToken(token: string) {
+  localStorage.setItem(ADMIN_TOKEN_KEY, token);
+}
+export function clearAdminToken() {
+  localStorage.removeItem(ADMIN_TOKEN_KEY);
 }
 
 type RequestOptions = {
@@ -19,22 +37,21 @@ type RequestOptions = {
   body?: unknown;
   headers?: Record<string, string>;
   auth?: boolean;
+  /** Force a specific token key (used by the auth contexts to stay scoped). */
+  tokenKey?: string;
 };
 
 export async function apiRequest<T = unknown>(
   path: string,
-  { method = 'GET', body, headers = {}, auth = false }: RequestOptions = {},
+  { method = 'GET', body, headers = {}, tokenKey }: RequestOptions = {},
 ): Promise<T> {
   const allHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     ...headers,
   };
 
-  const token = getToken();
-  if (auth && token) {
-    allHeaders['Authorization'] = `Bearer ${token}`;
-  } else if (token) {
-    // Always send token if available (optionalAuth routes benefit from it)
+  const token = tokenKey ? localStorage.getItem(tokenKey) : getToken();
+  if (token) {
     allHeaders['Authorization'] = `Bearer ${token}`;
   }
 

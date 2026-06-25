@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { AdminAuthProvider } from '@/contexts/AdminAuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { ModulesProvider } from '@/contexts/ModulesContext';
 import Layout from '@/components/layout/Layout';
@@ -55,6 +56,7 @@ import AdminSeoPage from '@/pages/admin/AdminSeoPage';
 import AdminGiftPackagingPage from '@/pages/admin/AdminGiftPackagingPage';
 import AdminBlogPage from '@/pages/admin/AdminBlogPage';
 import AdminNewsletterPage from '@/pages/admin/AdminNewsletterPage';
+import AdminTestimonialsPage from '@/pages/admin/AdminTestimonialsPage';
 import BlogPage from '@/pages/BlogPage';
 import BlogPostPage from '@/pages/BlogPostPage';
 
@@ -100,8 +102,8 @@ export default function App() {
             {/* Admin Setup (no auth required) */}
             <Route path="/admin/setup" element={<AdminSetupPage />} />
 
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminLayout />}>
+            {/* Admin Routes — isolated admin session (separate from storefront) */}
+            <Route path="/admin" element={<AdminAuthProvider><AdminLayout /></AdminAuthProvider>}>
               <Route index element={<AdminDashboardPage />} />
               <Route path="products" element={<AdminProductsPage />} />
               <Route path="orders" element={<AdminOrdersPage />} />
@@ -122,6 +124,7 @@ export default function App() {
               <Route path="gift-packaging" element={<AdminGiftPackagingPage />} />
               <Route path="blog" element={<AdminBlogPage />} />
               <Route path="newsletter" element={<AdminNewsletterPage />} />
+              <Route path="testimonials" element={<AdminTestimonialsPage />} />
             </Route>
           </Routes>
           <Toaster />

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { api, setToken, clearToken } from '@/lib/api';
+import { api, apiRequest, setToken, clearToken, CUSTOMER_TOKEN_KEY } from '@/lib/api';
 import type { Profile } from '@/types/index';
 import { toast } from 'sonner';
 
@@ -24,7 +24,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 async function fetchMe(): Promise<{ user: Profile } | null> {
-  try { return await api.get<{ user: Profile }>('/api/auth/me'); }
+  try { return await apiRequest<{ user: Profile }>('/api/auth/me', { tokenKey: CUSTOMER_TOKEN_KEY }); }
   catch { return null; }
 }
 
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    const token = localStorage.getItem('kw_token');
+    const token = localStorage.getItem(CUSTOMER_TOKEN_KEY);
     if (!token) { setLoading(false); return; }
     fetchMe()
       .then(result => {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getCategories, getProducts, getBanners, getGiftBoxes, getCmsPage } from '@/services/store';
+import { getCategories, getProducts, getBanners, getGiftBoxes, getCmsPage, getTestimonials } from '@/services/store';
 import { api } from '@/lib/api';
 import { useModules } from '@/contexts/ModulesContext';
 import Seo from '@/components/common/Seo';
@@ -112,6 +112,7 @@ export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [giftBoxes, setGiftBoxes] = useState<GiftBox[]>([]);
+  const [dbTestimonials, setDbTestimonials] = useState<{ name: string; role: string; text: string; rating: number }[]>([]);
   const [displayCats, setDisplayCats] = useState<Category[]>([]);
   const [email, setEmail] = useState('');
   const [subscribing, setSubscribing] = useState(false);
@@ -137,6 +138,7 @@ export default function HomePage() {
     getProducts({ featured: true, limit: 8 }).then(setFeaturedProducts);
     getBanners().then(d => setBanners(d.length ? d : DEMO_BANNERS));
     getGiftBoxes().then(d => setGiftBoxes(d.slice(0, 4)));
+    getTestimonials().then(d => setDbTestimonials(d.map(t => ({ name: t.name, role: t.role ?? '', text: t.text, rating: t.rating }))));
   }, []);
 
   const handleSubscribe = async (e: React.FormEvent) => {
@@ -153,7 +155,7 @@ export default function HomePage() {
 
   const features = cms.features?.length ? cms.features : DEFAULT_CONTENT.features!;
   const stats = cms.stats?.length ? cms.stats : DEFAULT_CONTENT.stats!;
-  const testimonials = cms.testimonials?.length ? cms.testimonials : DEFAULT_CONTENT.testimonials!;
+  const testimonials = dbTestimonials.length ? dbTestimonials : (cms.testimonials?.length ? cms.testimonials : DEFAULT_CONTENT.testimonials!);
   const promoBanners = cms.promo_banners?.length ? cms.promo_banners : DEFAULT_CONTENT.promo_banners!;
   const brands = cms.brands?.length ? cms.brands : DEFAULT_CONTENT.brands!;
   const newsletter = { ...DEFAULT_CONTENT.newsletter, ...cms.newsletter };

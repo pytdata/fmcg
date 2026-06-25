@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import {
   LayoutDashboard, ShoppingBag, Users, Tag, Gift, Image, Settings, Menu, LogOut,
   ChevronLeft, ChevronRight, FileText, Ticket, Lock, Loader2, FolderOpen, MapPin,
-  Boxes, Building2, UsersRound, BarChart3, Globe, Newspaper, Mail, PackageOpen,
+  Boxes, Building2, UsersRound, BarChart3, Globe, Newspaper, Mail, PackageOpen, Quote,
 } from 'lucide-react';
 
 const navGroups = [
@@ -45,6 +45,7 @@ const navGroups = [
       { label: 'Pages',   path: '/admin/pages',   icon: FileText },
       { label: 'Blog',    path: '/admin/blog',    icon: Newspaper },
       { label: 'Banners', path: '/admin/banners', icon: Image },
+      { label: 'Testimonials', path: '/admin/testimonials', icon: Quote },
       { label: 'Brands',  path: '/admin/brands',  icon: Building2 },
       { label: 'Team',    path: '/admin/team',    icon: UsersRound },
     ],
@@ -67,7 +68,7 @@ const navGroups = [
 
 // ── Inline admin login screen ─────────────────────────────────────────────────
 function AdminLoginScreen() {
-  const { signIn } = useAuth();
+  const { signIn } = useAdminAuth();
   const navigate = useNavigate();
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
@@ -166,7 +167,7 @@ function AdminLoginScreen() {
 
 // ── Main admin layout ─────────────────────────────────────────────────────────
 export default function AdminLayout() {
-  const { isAdmin, loading, signOut } = useAuth();
+  const { isAdmin, loading, signOut } = useAdminAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
