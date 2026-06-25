@@ -83,6 +83,13 @@ const PROMO_COLOURS = [
   { from: 'from-orange-600', to: 'to-orange-800', text: 'text-orange-700', light: 'text-orange-100' },
 ];
 
+// ── Dummy hero banners (used when no banners are configured in the admin) ──────
+const DEMO_BANNERS: Banner[] = [
+  { id: 'demo-1', title: 'Premium FMCG Products Delivered to You', subtitle: 'Quality groceries, beverages and household essentials at unbeatable prices across Ghana.', image_url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1600&q=80', link: '/shop', button_text: 'Shop Now', sort_order: 0, is_active: true },
+  { id: 'demo-2', title: 'Your Trusted Wholesale & Retail Partner', subtitle: 'From household care to personal care — stocked, priced right and delivered fast.', image_url: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=1600&q=80', link: '/shop', button_text: 'Browse Products', sort_order: 1, is_active: true },
+  { id: 'demo-3', title: 'Fast & Reliable Delivery', subtitle: 'Same-day delivery in Accra. We bring the supermarket to your doorstep.', image_url: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=1600&q=80', link: '/contact', button_text: 'Partner With Us', sort_order: 2, is_active: true },
+];
+
 // ══════════════════════════════════════════════════════════════════════════════
 export default function HomePage() {
   const { isEnabled } = useModules();
@@ -104,7 +111,7 @@ export default function HomePage() {
     // Load live data
     getCategories().then(setCategories);
     getProducts({ featured: true, limit: 8 }).then(setFeaturedProducts);
-    getBanners().then(setBanners);
+    getBanners().then(d => setBanners(d.length ? d : DEMO_BANNERS));
     getGiftBoxes().then(d => setGiftBoxes(d.slice(0, 4)));
   }, []);
 
@@ -139,10 +146,10 @@ export default function HomePage() {
         description="KW Enterprise is a leading FMCG distributor in Ghana, supplying quality household, personal-care and food products to retailers and homes — with fast, reliable delivery."
       />
 
-      {/* ── Hero Banner Slider ── */}
+      {/* ── Hero Banner Slider (full-bleed, 80vh) ── */}
       {banners.length > 0 && (
-        <section className="container mx-auto px-4 pt-4 pb-6">
-          <BannerSlider banners={banners} />
+        <section className="w-full">
+          <BannerSlider banners={banners} heightClass="h-[80vh]" rounded={false} />
         </section>
       )}
 
