@@ -150,16 +150,6 @@ function AdminLoginScreen() {
         <p className="text-center text-xs text-gray-400 mt-6">
           Admin access only. Unauthorised access is prohibited.
         </p>
-        <div className="text-center mt-3 space-y-1.5">
-          <div>
-            <Link to="/admin/setup" className="text-xs text-amber-600 hover:underline">
-              First time? Create admin account →
-            </Link>
-          </div>
-          <div>
-            <Link to="/" className="text-xs text-gray-400 hover:underline">← Back to website</Link>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -229,7 +219,7 @@ export default function AdminLayout() {
         </nav>
         <div className="p-2 border-t">
           <button
-            onClick={() => { signOut(); navigate('/'); }}
+            onClick={() => { signOut(); navigate('/admin'); }}
             className={`flex items-center gap-3 px-2 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 w-full ${collapsed ? 'justify-center' : ''}`}
           >
             <LogOut className="w-4 h-4 shrink-0" />
@@ -282,7 +272,7 @@ export default function AdminLayout() {
                 </nav>
                 <div className="p-2 border-t">
                   <button
-                    onClick={() => { signOut(); navigate('/'); }}
+                    onClick={() => { signOut(); navigate('/admin'); }}
                     className="flex items-center gap-3 px-2 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 w-full"
                   >
                     <LogOut className="w-4 h-4 shrink-0" /><span>Sign Out</span>
