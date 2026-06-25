@@ -21,13 +21,15 @@ interface ProductForm {
   name: string; slug: string; description: string; price: string;
   compare_price: string; stock_quantity: string; category_id: string;
   sku: string; is_featured: boolean; is_active: boolean;
-  images: string[]; video_urls: string[];
+  images: string[]; video_urls: string[]; tag_ids: string[];
 }
+
+interface PricingTagLite { id: string; name: string; slug: string; color: string; bg_color: string }
 
 const EMPTY_FORM: ProductForm = {
   name: '', slug: '', description: '', price: '', compare_price: '',
   stock_quantity: '', category_id: '', sku: '', is_featured: false, is_active: true,
-  images: [''], video_urls: [],
+  images: [''], video_urls: [], tag_ids: [],
 };
 
 // ── Media URL editor ──────────────────────────────────────────────────────────
@@ -282,6 +284,7 @@ function VariationTypeCard({ vtype, onDelete, onAddOption, onDeleteOption }: {
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [pricingTags, setPricingTags] = useState<PricingTagLite[]>([]);
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<ProductForm>(EMPTY_FORM);
   const [editId, setEditId] = useState<string | null>(null);
@@ -290,12 +293,14 @@ export default function AdminProductsPage() {
   const [activeTab, setActiveTab] = useState('details');
 
   const load = async () => {
-    const [prods, cats] = await Promise.all([
+    const [prods, cats, tags] = await Promise.all([
       api.get<Product[]>('/api/products/admin/all').catch(() => []),
       api.get<Category[]>('/api/categories').catch(() => []),
+      api.get<PricingTagLite[]>('/api/pricing-tags/admin/all').catch(() => []),
     ]);
     setProducts(Array.isArray(prods) ? prods : []);
     setCategories(Array.isArray(cats) ? cats : []);
+    setPricingTags(Array.isArray(tags) ? tags : []);
   };
 
   useEffect(() => { load(); }, []);
@@ -338,6 +343,7 @@ export default function AdminProductsPage() {
       sku: p.sku || '', is_featured: p.is_featured, is_active: p.is_active,
       images: p.images?.length ? [...p.images] : [''],
       video_urls: p.video_urls?.length ? [...p.video_urls] : [],
+      tag_ids: (p as Product & { pricing_tags?: { id: string }[] }).pricing_tags?.map(t => t.id) ?? [],
     });
     setEditId(p.id);
     setActiveTab('details');
@@ -365,6 +371,7 @@ export default function AdminProductsPage() {
         is_active: form.is_active,
         images,
         video_urls: videoUrls,
+        tag_ids: form.tag_ids,
       };
       if (editId) {
         await api.put<Product>(`/api/products/${editId}`, payload);
@@ -542,6 +549,31 @@ export default function AdminProductsPage() {
                   <Input value={form.sku} onChange={e => setForm(f => ({ ...f, sku: e.target.value }))} />
                 </div>
               </div>
+              {pricingTags.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label className="text-sm">Tags</Label>
+                  <p className="text-xs text-gray-400">Click to assign one or more tags. Customers can click a tag to see all products with it.</p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {pricingTags.map(t => {
+                      const selected = form.tag_ids.includes(t.id);
+                      return (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setForm(f => ({
+                            ...f,
+                            tag_ids: selected ? f.tag_ids.filter(id => id !== t.id) : [...f.tag_ids, t.id],
+                          }))}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${selected ? 'ring-2 ring-offset-1 ring-amber-400 border-transparent' : 'border-gray-200 opacity-70 hover:opacity-100'}`}
+                          style={selected ? { background: t.bg_color, color: t.color } : undefined}
+                        >
+                          {t.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               <div className="flex gap-6">
                 <div className="flex items-center gap-2">
                   <Switch checked={form.is_featured} onCheckedChange={v => setForm(f => ({ ...f, is_featured: v }))} />

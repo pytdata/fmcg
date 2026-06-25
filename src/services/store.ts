@@ -1,6 +1,11 @@
 import { api } from '@/lib/api';
 import { cachedGet } from '@/lib/api';
-import type { Product, Category, Banner, GiftBox, Promotion, SiteSettings, Order, Brand, TeamMember, SeoMeta, GiftPackaging, BlogPost } from '@/types/index';
+import type { Product, Category, Banner, GiftBox, Promotion, SiteSettings, Order, Brand, TeamMember, SeoMeta, GiftPackaging, BlogPost, Testimonial } from '@/types/index';
+
+export async function getTestimonials(): Promise<Testimonial[]> {
+  try { return await cachedGet<Testimonial[]>('/api/testimonials'); }
+  catch { return []; }
+}
 
 export async function getGiftPackaging(): Promise<GiftPackaging[]> {
   try { return await cachedGet<GiftPackaging[]>('/api/gift-packaging'); }

@@ -38,7 +38,14 @@ const DEFAULT_MODULES = [
 ];
 
 // Bump this whenever new migration steps are added so they run once per DB.
-const SCHEMA_VERSION = '8';
+const SCHEMA_VERSION = '9';
+
+// Default testimonials (seeded once so the section isn't empty).
+const DEFAULT_TESTIMONIALS = [
+  { name: 'Abena Mensah', role: 'Regular Customer', text: 'KW Enterprise has the best quality products. Delivery is always on time and the packaging is perfect. Highly recommend!', rating: 5 },
+  { name: 'Kwame Asante', role: 'Business Owner', text: "I've been ordering wholesale from KW for 2 years. The prices are competitive and they always have stock. Great business to work with.", rating: 5 },
+  { name: 'Ama Boateng', role: 'Homemaker', text: "The gift boxes are absolutely beautiful! I ordered one for my mother's birthday and she loved it. Will definitely order again.", rating: 5 },
+];
 
 // Default gift packaging options (admin can edit/add more afterwards).
 const DEFAULT_PACKAGING = [
@@ -557,6 +564,33 @@ async function runMigrations() {
         PRIMARY KEY (product_id, tag_id)
       )
     `);
+
+    // ── 019: testimonials (admin-managed customer reviews) ────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS testimonials (
+        id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name        TEXT NOT NULL,
+        role        TEXT,
+        text        TEXT NOT NULL,
+        rating      INTEGER NOT NULL DEFAULT 5 CHECK (rating BETWEEN 1 AND 5),
+        avatar_url  TEXT,
+        sort_order  INTEGER DEFAULT 0,
+        is_active   BOOLEAN DEFAULT true,
+        created_at  TIMESTAMPTZ DEFAULT now()
+      )
+    `);
+    {
+      const { rows: tCount } = await client.query('SELECT COUNT(*)::int AS n FROM testimonials');
+      if (tCount[0].n === 0) {
+        let i = 0;
+        for (const t of DEFAULT_TESTIMONIALS) {
+          await client.query(
+            `INSERT INTO testimonials (name, role, text, rating, sort_order) VALUES ($1,$2,$3,$4,$5)`,
+            [t.name, t.role, t.text, t.rating, i++],
+          );
+        }
+      }
+    }
 
     // ── Mark this schema version complete so the heavy body is skipped next time.
     await client.query(

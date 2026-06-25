@@ -62,7 +62,7 @@ const CATEGORY_IMAGE_RULES: { test: RegExp; url: string }[] = [
   { test: /air|fragrance|freshener|camphor|candle|furniture/, url: 'https://images.unsplash.com/photo-1603006905003-be475563bc59?w=600&q=80' },
   { test: /pest|insect|repellent|coil/, url: 'https://images.unsplash.com/photo-1632173870530-5c5b8c2f2b8a?w=600&q=80' },
   { test: /stationery|office|pen|envelope|book|marker|adhesive/, url: 'https://images.unsplash.com/photo-1583485088034-697b5bc36b92?w=600&q=80' },
-  { test: /health|hygiene|wellness|ointment|antiseptic|pharma/, url: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=80' },
+  { test: /health|hygiene|wellness|ointment|antiseptic|pharma/, url: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&q=80' },
   { test: /food|beverage|confection|candy|chocolate|gum|sugar|oil|vinegar/, url: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=600&q=80' },
   { test: /household|batter|lighter|tissue|peg|hanger/, url: 'https://images.unsplash.com/photo-1556909212-d5b604d0c90d?w=600&q=80' },
 ];

@@ -310,6 +310,18 @@ export interface SeoAuditResult {
   checks: SeoAuditCheck[];
 }
 
+export interface Testimonial {
+  id: string;
+  name: string;
+  role?: string;
+  text: string;
+  rating: number;
+  avatar_url?: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at?: string;
+}
+
 export interface GiftPackaging {
   id: string;
   name: string;

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Tag, Zap, Flame, Sparkles, ShoppingBag, Ticket } from 'lucide-react';
@@ -10,22 +10,28 @@ const TAG_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> 
   Tag, Zap, Flame, Sparkles, ShoppingBag, Ticket,
 };
 
-function PricingTagBadge({ tag }: { tag: { name: string; icon: string; color: string; bg_color: string } }) {
+interface ProductTag { name: string; slug: string; icon: string; color: string; bg_color: string }
+
+function PricingTagBadge({ tag, onClick }: { tag: ProductTag; onClick: (e: React.MouseEvent) => void }) {
   const Icon = TAG_ICON_MAP[tag.icon] ?? Tag;
   return (
-    <span
-      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold leading-none whitespace-nowrap"
+    <button
+      type="button"
+      onClick={onClick}
+      title={`View all ${tag.name}`}
+      className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold leading-none whitespace-nowrap hover:scale-105 transition-transform"
       style={{ background: tag.bg_color, color: tag.color }}
     >
       <Icon className="w-2.5 h-2.5" />
       {tag.name}
-    </span>
+    </button>
   );
 }
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addToCart } = useCart();
-  const tags = (product as Product & { pricing_tags?: { name: string; icon: string; color: string; bg_color: string }[] }).pricing_tags ?? [];
+  const navigate = useNavigate();
+  const tags = (product as Product & { pricing_tags?: ProductTag[] }).pricing_tags ?? [];
 
   return (
     <div className="group bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col">
@@ -37,10 +43,16 @@ export default function ProductCard({ product }: { product: Product }) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
 
-        {/* Pricing tag badges — top-left stack */}
+        {/* Pricing tag badges — top-left stack (click to filter the shop by tag) */}
         {tags.length > 0 && (
           <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {tags.slice(0, 2).map((t, i) => <PricingTagBadge key={i} tag={t} />)}
+            {tags.slice(0, 2).map((t, i) => (
+              <PricingTagBadge
+                key={i}
+                tag={t}
+                onClick={e => { e.preventDefault(); e.stopPropagation(); navigate(`/shop?tag=${encodeURIComponent(t.slug)}`); }}
+              />
+            ))}
           </div>
         )}
 

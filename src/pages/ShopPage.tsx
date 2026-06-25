@@ -139,12 +139,16 @@ export default function ShopPage() {
   const navigate = useNavigate();
   const searchQuery = searchParams.get('search') || '';
   const categoryParam = searchParams.get('category') || '';
+  const tagParam = searchParams.get('tag') || '';
 
   const [flat, setFlat] = useState<Category[]>([]);
   const [tree, setTree] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [pricingTags, setPricingTags] = useState<PricingTag[]>([]);
-  const [selectedTag, setSelectedTag] = useState<string>('');
+  const [selectedTag, setSelectedTag] = useState<string>(tagParam);
+
+  // Keep the selected tag in sync with the ?tag= URL param (so tag links work).
+  useEffect(() => { setSelectedTag(tagParam); }, [tagParam]);
   const [search, setSearch] = useState(searchQuery);
   const [sort, setSort] = useState('newest');
   const [loading, setLoading] = useState(true);

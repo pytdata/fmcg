@@ -127,10 +127,23 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
+// Replace a product's pricing-tag assignments (parameterized, safe if absent).
+async function syncProductTags(productId, tagIds) {
+  if (!Array.isArray(tagIds)) return;
+  await pool.query('DELETE FROM product_pricing_tags WHERE product_id = $1', [productId]);
+  for (const tagId of tagIds) {
+    if (!tagId) continue;
+    await pool.query(
+      `INSERT INTO product_pricing_tags (product_id, tag_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+      [productId, tagId],
+    );
+  }
+}
+
 // POST /api/products (admin)
 router.post('/', auth, adminOnly, async (req, res) => {
   const { name, slug, description, price, compare_price, stock_quantity,
-    category_id, images, video_urls, sku, weight_kg, is_featured, is_active } = req.body;
+    category_id, images, video_urls, sku, weight_kg, is_featured, is_active, tag_ids } = req.body;
   if (!name || !slug) return res.status(400).json({ error: 'name and slug are required' });
   try {
     const { rows } = await pool.query(
@@ -141,6 +154,7 @@ router.post('/', auth, adminOnly, async (req, res) => {
        stock_quantity || 0, category_id || null, images || [], video_urls || [],
        sku || null, weight_kg || null, is_featured ?? false, is_active ?? true],
     );
+    try { await syncProductTags(rows[0].id, tag_ids); } catch (e) { console.error('[products tags]', e.message); }
     res.status(201).json(rows[0]);
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'Slug already exists' });
@@ -151,7 +165,7 @@ router.post('/', auth, adminOnly, async (req, res) => {
 // PUT /api/products/:id (admin)
 router.put('/:id', auth, adminOnly, async (req, res) => {
   const { name, slug, description, price, compare_price, stock_quantity,
-    category_id, images, video_urls, sku, weight_kg, is_featured, is_active } = req.body;
+    category_id, images, video_urls, sku, weight_kg, is_featured, is_active, tag_ids } = req.body;
   try {
     const { rows } = await pool.query(
       `UPDATE products SET name=$1, slug=$2, description=$3, price=$4, compare_price=$5,
@@ -163,6 +177,7 @@ router.put('/:id', auth, adminOnly, async (req, res) => {
        weight_kg || null, is_featured ?? false, is_active ?? true, req.params.id],
     );
     if (!rows.length) return res.status(404).json({ error: 'Product not found' });
+    try { await syncProductTags(req.params.id, tag_ids); } catch (e) { console.error('[products tags]', e.message); }
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: 'Failed to update product' });
