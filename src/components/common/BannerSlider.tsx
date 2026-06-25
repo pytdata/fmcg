@@ -5,7 +5,15 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { resolveImageUrl, IMAGE_PLACEHOLDER } from '@/lib/media';
 import type { Banner } from '@/types/index';
 
-export default function BannerSlider({ banners }: { banners: Banner[] }) {
+export default function BannerSlider({
+  banners,
+  heightClass = 'h-[300px] sm:h-[380px] md:h-[460px]',
+  rounded = true,
+}: {
+  banners: Banner[];
+  heightClass?: string;
+  rounded?: boolean;
+}) {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
@@ -19,7 +27,7 @@ export default function BannerSlider({ banners }: { banners: Banner[] }) {
   const banner = banners[current];
 
   return (
-    <div className="relative w-full h-[300px] sm:h-[380px] md:h-[460px] overflow-hidden rounded-xl">
+    <div className={`relative w-full ${heightClass} overflow-hidden ${rounded ? 'rounded-xl' : ''}`}>
       <div className="absolute inset-0 transition-opacity duration-700">
         <img
           src={banner.image_url ? resolveImageUrl(banner.image_url) : IMAGE_PLACEHOLDER}
