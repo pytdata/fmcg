@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { validateCoupon, createOrder } from '@/services/store';
@@ -9,8 +9,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { toast } from 'sonner';
-import { ArrowLeft, Banknote, CreditCard, Loader2, MapPin, Ticket, Truck, X } from 'lucide-react';
-import type { DeliveryLocation } from '@/types/index';
+import { ArrowLeft, Banknote, CreditCard, Gift, Loader2, MapPin, Ticket, Truck, X } from 'lucide-react';
+import type { DeliveryLocation, GiftBox } from '@/types/index';
+
+// Draft shape written to localStorage by CustomGiftBoxPage.tsx.
+interface CustomGiftBoxDraft {
+  id?: string;
+  packaging_id: string | null;
+  packaging_style: string;
+  packaging_price: number;
+  personal_message: string;
+  items: { product_id: string; name: string; price: number; qty: number; image_url?: string }[];
+  total_price: number;
+}
 
 declare global {
   interface Window {
@@ -35,6 +46,34 @@ export default function CheckoutPage() {
   const { user, profile } = useAuth();
   const { cartItems, cartTotal, refreshCart } = useCart();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const giftBoxParam = searchParams.get('giftbox'); // 'curated' | 'custom' | null
+
+  // ── Gift box checkout intent (stashed in localStorage by GiftBoxDetailPage /
+  // CustomGiftBoxPage — this checkout may have zero cart items in this mode) ──
+  const [curatedBox, setCuratedBox] = useState<GiftBox | null>(null);
+  const [customBox, setCustomBox] = useState<CustomGiftBoxDraft | null>(null);
+
+  useEffect(() => {
+    if (giftBoxParam === 'curated') {
+      try {
+        const raw = localStorage.getItem('giftBoxOrder');
+        setCuratedBox(raw ? JSON.parse(raw).giftBox ?? null : null);
+      } catch { setCuratedBox(null); }
+    } else if (giftBoxParam === 'custom') {
+      try {
+        const raw = localStorage.getItem('customGiftBox');
+        setCustomBox(raw ? JSON.parse(raw) : null);
+      } catch { setCustomBox(null); }
+    }
+  }, [giftBoxParam]);
+
+  const isGiftBoxCheckout = giftBoxParam === 'curated' || giftBoxParam === 'custom';
+  const checkoutSubtotal = giftBoxParam === 'curated'
+    ? (curatedBox?.price ?? 0)
+    : giftBoxParam === 'custom'
+      ? (customBox?.total_price ?? 0)
+      : cartTotal;
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
@@ -81,7 +120,7 @@ export default function CheckoutPage() {
   const selectedLocation = deliveryLocations.find(l => l.id === selectedLocationId);
   const baseDeliveryFee = selectedLocation ? Number(selectedLocation.delivery_fee) : 0;
   const deliveryFee = freeShipping ? 0 : baseDeliveryFee;
-  const total = Math.max(0, cartTotal + deliveryFee - discount);
+  const total = Math.max(0, checkoutSubtotal + deliveryFee - discount);
 
   const handleLocationChange = (locId: string) => {
     setSelectedLocationId(locId);
@@ -95,7 +134,7 @@ export default function CheckoutPage() {
   const applyCoupon = async () => {
     if (!couponCode.trim()) return;
     setApplyingCoupon(true);
-    const result = await validateCoupon(couponCode.trim(), cartTotal);
+    const result = await validateCoupon(couponCode.trim(), checkoutSubtotal);
     setApplyingCoupon(false);
     if (result.valid) {
       setDiscount(result.discount ?? 0);
@@ -123,8 +162,14 @@ export default function CheckoutPage() {
     setCouponApplied(false);
   };
 
-  const clearCart = async () => {
-    if (user) {
+  // Clears whatever was actually being purchased — the cart for a regular
+  // checkout, or the stashed order intent for a gift-box checkout.
+  const clearPurchasedState = async () => {
+    if (giftBoxParam === 'curated') {
+      localStorage.removeItem('giftBoxOrder');
+    } else if (giftBoxParam === 'custom') {
+      localStorage.removeItem('customGiftBox');
+    } else if (user) {
       await api.delete('/api/cart').catch(console.error);
     } else {
       localStorage.removeItem('guestCart');
@@ -132,31 +177,77 @@ export default function CheckoutPage() {
     await refreshCart();
   };
 
-  const buildOrderPayload = () => ({
-    items: cartItems.map(item => ({
-      product_id: item.product_id,
-      name: item.product?.name || '',
-      quantity: item.quantity,
-      unit_price: item.product?.price || 0,
-      total_price: (item.product?.price || 0) * item.quantity,
-      image_url: item.product?.images?.[0] || null,
-    })),
-    user_id: user?.id || null,
-    guest_email: !user ? (form.email || null) : null,
-    guest_phone: !user ? form.phone : null,
-    payment_method: form.paymentMethod,
-    subtotal: cartTotal,
-    discount_amount: discount,
-    delivery_fee: deliveryFee,
-    total_amount: total,
-    coupon_code: couponCode || null,
-    shipping_name: form.fullName,
-    shipping_phone: form.phone,
-    shipping_address: form.address,
-    shipping_city: form.city,
-    shipping_region: form.region,
-    order_type: 'regular',
-  });
+  const buildOrderPayload = () => {
+    let items: { product_id: string | null; name: string; quantity: number; unit_price: number; total_price: number; image_url: string | null }[];
+    let orderType: 'regular' | 'gift_box' | 'custom_gift_box' = 'regular';
+    let giftBoxId: string | null = null;
+    let customGiftBoxId: string | null = null;
+
+    if (giftBoxParam === 'curated' && curatedBox) {
+      items = [{
+        product_id: null,
+        name: curatedBox.name,
+        quantity: 1,
+        unit_price: curatedBox.price,
+        total_price: curatedBox.price,
+        image_url: curatedBox.image_url || null,
+      }];
+      orderType = 'gift_box';
+      giftBoxId = curatedBox.id;
+    } else if (giftBoxParam === 'custom' && customBox) {
+      items = customBox.items.map(i => ({
+        product_id: i.product_id || null,
+        name: i.name,
+        quantity: i.qty,
+        unit_price: i.price,
+        total_price: i.price * i.qty,
+        image_url: i.image_url || null,
+      }));
+      if (customBox.packaging_price > 0) {
+        items.push({
+          product_id: null,
+          name: `Gift Packaging — ${customBox.packaging_style}`,
+          quantity: 1,
+          unit_price: customBox.packaging_price,
+          total_price: customBox.packaging_price,
+          image_url: null,
+        });
+      }
+      orderType = 'custom_gift_box';
+      customGiftBoxId = customBox.id || null;
+    } else {
+      items = cartItems.map(item => ({
+        product_id: item.product_id,
+        name: item.product?.name || '',
+        quantity: item.quantity,
+        unit_price: item.product?.price || 0,
+        total_price: (item.product?.price || 0) * item.quantity,
+        image_url: item.product?.images?.[0] || null,
+      }));
+    }
+
+    return {
+      items,
+      user_id: user?.id || null,
+      guest_email: !user ? (form.email || null) : null,
+      guest_phone: !user ? form.phone : null,
+      payment_method: form.paymentMethod,
+      subtotal: checkoutSubtotal,
+      discount_amount: discount,
+      delivery_fee: deliveryFee,
+      total_amount: total,
+      coupon_code: couponCode || null,
+      shipping_name: form.fullName,
+      shipping_phone: form.phone,
+      shipping_address: form.address,
+      shipping_city: form.city,
+      shipping_region: form.region,
+      order_type: orderType,
+      gift_box_id: giftBoxId,
+      custom_gift_box_id: customGiftBoxId,
+      notes: giftBoxParam === 'custom' ? (customBox?.personal_message || null) : null,
+    };
+  };
 
   const placeOrder = async () => {
     if (!form.fullName || !form.phone || !form.address) {
@@ -178,7 +269,7 @@ export default function CheckoutPage() {
       if (!order) throw new Error('Failed to create order');
 
       if (form.paymentMethod === 'cod') {
-        await clearCart();
+        await clearPurchasedState();
         toast.success('Order placed successfully!');
         navigate(`/order-confirmation?order=${order.order_number}&mode=cod`);
         return;
@@ -220,7 +311,7 @@ export default function CheckoutPage() {
               '/api/orders/verify-payment',
               { reference: response.reference, orderId: order.id },
             );
-            await clearCart();
+            await clearPurchasedState();
             if (result.verified) {
               toast.success('Payment confirmed! 🎉');
               navigate(`/order-confirmation?order=${order.order_number}&mode=paystack&status=paid`);
@@ -230,7 +321,7 @@ export default function CheckoutPage() {
             }
           } catch (err) {
             console.error('Payment verification error:', err);
-            await clearCart();
+            await clearPurchasedState();
             navigate(`/order-confirmation?order=${order.order_number}&mode=paystack`);
           }
         },
@@ -243,7 +334,29 @@ export default function CheckoutPage() {
     }
   };
 
-  if (cartItems.length === 0) {
+  if (giftBoxParam === 'curated' && !curatedBox) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">No gift box selected</h2>
+        <Link to="/gift-boxes">
+          <Button className="bg-emerald-600 hover:bg-emerald-700 mt-4">Browse Gift Boxes</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  if (giftBoxParam === 'custom' && !customBox) {
+    return (
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">No custom gift box selected</h2>
+        <Link to="/gift-boxes/custom">
+          <Button className="bg-emerald-600 hover:bg-emerald-700 mt-4">Build a Gift Box</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  if (!isGiftBoxCheckout && cartItems.length === 0) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <h2 className="text-xl font-bold text-gray-900 mb-2">Your cart is empty</h2>
@@ -258,8 +371,11 @@ export default function CheckoutPage() {
     <div className="container mx-auto px-4 py-8">
       <script src="https://js.paystack.co/v1/inline.js" async />
 
-      <Link to="/cart" className="text-sm text-gray-500 hover:text-amber-600 flex items-center gap-1 mb-4">
-        <ArrowLeft className="w-4 h-4" /> Back to Cart
+      <Link
+        to={giftBoxParam === 'curated' ? '/gift-boxes' : giftBoxParam === 'custom' ? '/gift-boxes/custom' : '/cart'}
+        className="text-sm text-gray-500 hover:text-amber-600 flex items-center gap-1 mb-4"
+      >
+        <ArrowLeft className="w-4 h-4" /> {isGiftBoxCheckout ? 'Back to Gift Boxes' : 'Back to Cart'}
       </Link>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Checkout</h1>
 
@@ -376,21 +492,66 @@ export default function CheckoutPage() {
           <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm sticky top-24">
             <h3 className="font-bold text-gray-900 mb-4">Order Summary</h3>
 
-            {/* Cart items */}
+            {/* Items — cart, curated gift box, or custom gift box depending on checkout mode */}
             <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
-              {cartItems.map(item => (
-                <div key={item.id} className="flex items-center gap-3">
-                  <img src={item.product?.images?.[0]} alt=""
+              {giftBoxParam === 'curated' && curatedBox ? (
+                <div className="flex items-center gap-3">
+                  <img src={curatedBox.image_url || ''} alt=""
                     className="w-10 h-10 rounded object-cover bg-gray-50 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-900 truncate">{item.product?.name}</p>
-                    <p className="text-xs text-gray-500">×{item.quantity}</p>
+                    <p className="text-xs font-medium text-gray-900 truncate flex items-center gap-1">
+                      <Gift className="w-3 h-3 text-emerald-600 shrink-0" /> {curatedBox.name}
+                    </p>
+                    <p className="text-xs text-gray-500">Gift Box ×1</p>
                   </div>
                   <span className="text-xs font-semibold text-gray-900 shrink-0">
-                    GHS {((item.product?.price || 0) * item.quantity).toFixed(2)}
+                    GHS {curatedBox.price.toFixed(2)}
                   </span>
                 </div>
-              ))}
+              ) : giftBoxParam === 'custom' && customBox ? (
+                <>
+                  {customBox.items.map(item => (
+                    <div key={item.product_id} className="flex items-center gap-3">
+                      <img src={item.image_url || ''} alt=""
+                        className="w-10 h-10 rounded object-cover bg-gray-50 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-900 truncate">{item.name}</p>
+                        <p className="text-xs text-gray-500">×{item.qty}</p>
+                      </div>
+                      <span className="text-xs font-semibold text-gray-900 shrink-0">
+                        GHS {(item.price * item.qty).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                  {customBox.packaging_price > 0 && (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded bg-emerald-50 shrink-0 flex items-center justify-center">
+                        <Gift className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-900 truncate">Packaging — {customBox.packaging_style}</p>
+                      </div>
+                      <span className="text-xs font-semibold text-gray-900 shrink-0">
+                        GHS {customBox.packaging_price.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                cartItems.map(item => (
+                  <div key={item.id} className="flex items-center gap-3">
+                    <img src={item.product?.images?.[0]} alt=""
+                      className="w-10 h-10 rounded object-cover bg-gray-50 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-gray-900 truncate">{item.product?.name}</p>
+                      <p className="text-xs text-gray-500">×{item.quantity}</p>
+                    </div>
+                    <span className="text-xs font-semibold text-gray-900 shrink-0">
+                      GHS {((item.product?.price || 0) * item.quantity).toFixed(2)}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Coupon */}
@@ -432,7 +593,7 @@ export default function CheckoutPage() {
             <div className="space-y-2 text-sm mb-4 border-t pt-3">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span>GHS {cartTotal.toFixed(2)}</span>
+                <span>GHS {checkoutSubtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span className="flex items-center gap-1">

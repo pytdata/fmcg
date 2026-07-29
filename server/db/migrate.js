@@ -66,6 +66,22 @@ async function runMigrations() {
         key TEXT PRIMARY KEY, value TEXT, updated_at TIMESTAMPTZ DEFAULT now()
       )
     `);
+
+    // Foundational tables (products, categories, profiles, orders, …) live in
+    // schema.sql. There is no separate deploy step that runs it — Vercel only
+    // ever calls this function — so a genuinely fresh production database (a
+    // new Postgres/Supabase project) has NONE of these tables until we create
+    // them here. Everything in schema.sql is CREATE TABLE IF NOT EXISTS / INSERT
+    // ... ON CONFLICT DO NOTHING, so re-running it on a DB that already has the
+    // full schema is a fast no-op.
+    try {
+      const schemaSql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
+      await client.query(schemaSql);
+    } catch (schemaErr) {
+      console.error('[migrations] Foundational schema.sql failed:', schemaErr.message);
+      throw schemaErr;
+    }
+
     await client.query(`
       ALTER TABLE categories
         ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES categories(id) ON DELETE SET NULL

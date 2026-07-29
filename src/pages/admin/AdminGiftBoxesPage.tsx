@@ -25,37 +25,59 @@ export default function AdminGiftBoxesPage() {
   useEffect(() => { fetch(); }, []);
 
   const save = async () => {
-    setLoading(true);
-    const payload = {
-      name: form.name,
-      slug: form.slug || form.name.toLowerCase().replace(/\s+/g, '-'),
-      description: form.description,
-      image_url: form.image_url,
-      price: parseFloat(form.price) || 0,
-      compare_price: parseFloat(form.compare_price) || null,
-      items: JSON.parse(form.items || '[]'),
-      packaging_style: form.packaging_style,
-      promotional_discount: parseFloat(form.promotional_discount) || 0,
-      coupon_code: form.coupon_code || null,
-      is_published: !!form.is_published,
-      is_active: !!form.is_active,
-      sort_order: parseInt(form.sort_order) || 0,
-    };
-    if (editing) {
-      await api.put(`/api/gift-boxes/${editing.id}`, payload);
-      toast.success('Gift box updated');
-    } else {
-      await api.post('/api/gift-boxes', payload);
-      toast.success('Gift box created');
+    if (!form.name?.trim()) {
+      toast.error('Name is required');
+      return;
     }
-    setEditing(null); setForm({});
-    await fetch(); setLoading(false);
+    let items;
+    try {
+      items = JSON.parse(form.items || '[]');
+    } catch {
+      toast.error('Items must be valid JSON');
+      return;
+    }
+    setLoading(true);
+    try {
+      const payload = {
+        name: form.name,
+        slug: form.slug || form.name.toLowerCase().replace(/\s+/g, '-'),
+        description: form.description,
+        image_url: form.image_url,
+        price: parseFloat(form.price) || 0,
+        compare_price: parseFloat(form.compare_price) || null,
+        items,
+        packaging_style: form.packaging_style,
+        promotional_discount: parseFloat(form.promotional_discount) || 0,
+        coupon_code: form.coupon_code || null,
+        is_published: !!form.is_published,
+        is_active: !!form.is_active,
+        sort_order: parseInt(form.sort_order) || 0,
+      };
+      if (editing) {
+        await api.put(`/api/gift-boxes/${editing.id}`, payload);
+        toast.success('Gift box updated');
+      } else {
+        await api.post('/api/gift-boxes', payload);
+        toast.success('Gift box created');
+      }
+      setEditing(null); setForm({});
+      await fetch();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save gift box');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const remove = async (id: string) => {
     if (!confirm('Delete this gift box?')) return;
-    await api.delete(`/api/gift-boxes/${id}`);
-    toast.success('Deleted'); fetch();
+    try {
+      await api.delete(`/api/gift-boxes/${id}`);
+      toast.success('Deleted');
+      await fetch();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Delete failed');
+    }
   };
 
   const openEdit = (b: GiftBox) => {

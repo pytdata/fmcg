@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const pool = require('../db/pool');
-const { auth, adminOnly } = require('../middleware/auth');
+const { auth, adminOnly, optionalAuth } = require('../middleware/auth');
 
 // GET /api/gift-boxes
 router.get('/', async (_req, res) => {
@@ -18,7 +18,7 @@ router.get('/', async (_req, res) => {
 router.get('/:slug', async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT * FROM gift_boxes WHERE slug = $1 AND is_published = true`,
+      `SELECT * FROM gift_boxes WHERE slug = $1 AND is_published = true AND is_active = true`,
       [req.params.slug],
     );
     if (!rows.length) return res.status(404).json({ error: 'Gift box not found' });
@@ -79,6 +79,7 @@ router.put('/:id', auth, adminOnly, async (req, res) => {
     if (!rows.length) return res.status(404).json({ error: 'Gift box not found' });
     res.json(rows[0]);
   } catch (err) {
+    if (err.code === '23505') return res.status(409).json({ error: 'Slug already exists' });
     res.status(500).json({ error: 'Failed to update gift box' });
   }
 });
@@ -94,13 +95,13 @@ router.delete('/:id', auth, adminOnly, async (req, res) => {
 });
 
 // POST /api/gift-boxes/custom  — save a user's custom gift box
-router.post('/custom', async (req, res) => {
-  const { user_id, name, packaging_style, personal_message, items, total_price } = req.body;
+router.post('/custom', optionalAuth, async (req, res) => {
+  const { name, packaging_style, personal_message, items, total_price } = req.body;
   try {
     const { rows } = await pool.query(
       `INSERT INTO custom_gift_boxes (user_id, name, packaging_style, personal_message, items, total_price)
        VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [user_id || null, name || null, packaging_style || 'standard',
+      [req.user?.id || null, name || null, packaging_style || 'standard',
        personal_message || null, JSON.stringify(items || []), total_price || 0],
     );
     res.status(201).json(rows[0]);

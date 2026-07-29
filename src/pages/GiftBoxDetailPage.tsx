@@ -32,8 +32,9 @@ export default function GiftBoxDetailPage() {
 
   const buyGiftBox = () => {
     if (!giftBox) return;
-    // Store gift box order intent
-    localStorage.setItem('giftBoxOrder', JSON.stringify({ giftBoxId: giftBox.id, type: 'curated' }));
+    // Store gift box order intent — the full box (not just its id) so checkout
+    // can build the order line item and totals without another fetch.
+    localStorage.setItem('giftBoxOrder', JSON.stringify({ giftBox, type: 'curated' }));
     toast.success('Gift box added. Proceeding to checkout...');
     navigate('/checkout?giftbox=curated');
   };

@@ -147,6 +147,7 @@ export default function AdminSeoPage() {
       setAudit(data);
       setAuditLoaded(true);
       setOverallScore(data.overall_score);
+      await loadEntries();
       toast.success('Audit complete');
     } catch {
       toast.error('Failed to run audit');
