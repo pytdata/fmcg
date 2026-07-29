@@ -211,7 +211,7 @@ export interface Order {
   shipping_region?: string;
   tracking_number?: string;
   notes?: string;
-  order_type: 'regular' | 'gift_box';
+  order_type: 'regular' | 'gift_box' | 'custom_gift_box';
   gift_box_id?: string | null;
   custom_gift_box_id?: string | null;
   created_at: string;

@@ -3,7 +3,7 @@
  * Usage: node server/db/seed.js
  */
 const bcrypt = require('bcryptjs');
-require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const pool = require('./pool');
 
 async function seed() {

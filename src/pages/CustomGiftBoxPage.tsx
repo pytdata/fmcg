@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProducts, getGiftPackaging } from '@/services/store';
+import { getProducts, getGiftPackaging, createCustomGiftBox } from '@/services/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,6 +18,7 @@ export default function CustomGiftBoxPage() {
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
   const [picker, setPicker] = useState('');
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,27 +59,47 @@ export default function CustomGiftBoxPage() {
   const packagingPrice = packaging ? Number(packaging.price) : 0;
   const total = itemsTotal + packagingPrice;
 
-  const proceedToCheckout = () => {
+  const proceedToCheckout = async () => {
     if (selectedItems.length === 0) {
       toast.error('Please select at least one item.');
       return;
     }
+    const items = selectedItems.map(i => ({
+      product_id: i.product.id,
+      name: i.product.name,
+      price: i.product.price,
+      qty: i.qty,
+      image_url: i.product.images?.[0],
+    }));
     const boxData = {
       packaging_id: packaging?.id ?? null,
       packaging_style: packaging?.name ?? '',
       packaging_price: packagingPrice,
       personal_message: message,
-      items: selectedItems.map(i => ({
-        product_id: i.product.id,
-        name: i.product.name,
-        price: i.product.price,
-        qty: i.qty,
-        image_url: i.product.images?.[0],
-      })),
+      items,
       total_price: total,
     };
-    localStorage.setItem('customGiftBox', JSON.stringify(boxData));
-    toast.success('Gift box saved! Proceeding to checkout...');
+
+    setSaving(true);
+    // Persist the custom box server-side (POST /api/gift-boxes/custom) so it isn't
+    // only a client-side draft. Non-blocking: if it fails, still let the customer
+    // proceed with the locally-saved draft rather than losing their selections.
+    const saved = await createCustomGiftBox({
+      name: null,
+      packaging_style: packaging?.name ?? 'standard',
+      personal_message: message || null,
+      items,
+      total_price: total,
+    });
+    setSaving(false);
+
+    const savedId = (saved as { id?: string } | null)?.id;
+    localStorage.setItem('customGiftBox', JSON.stringify({ ...boxData, id: savedId }));
+    if (!savedId) {
+      toast.warning("Gift box saved locally, but we couldn't sync it — proceeding to checkout anyway.");
+    } else {
+      toast.success('Gift box saved! Proceeding to checkout...');
+    }
     navigate('/checkout?giftbox=custom');
   };
 
@@ -204,8 +225,8 @@ export default function CustomGiftBoxPage() {
                 <span>GHS {total.toFixed(2)}</span>
               </div>
             </div>
-            <Button className="w-full bg-emerald-600 hover:bg-emerald-700 h-11" onClick={proceedToCheckout} disabled={selectedItems.length === 0}>
-              Proceed to Checkout <ArrowRight className="w-4 h-4 ml-2" />
+            <Button className="w-full bg-emerald-600 hover:bg-emerald-700 h-11" onClick={proceedToCheckout} disabled={selectedItems.length === 0 || saving}>
+              {saving ? 'Saving...' : <>Proceed to Checkout <ArrowRight className="w-4 h-4 ml-2" /></>}
             </Button>
           </div>
         </div>

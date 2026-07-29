@@ -39,9 +39,9 @@ export default function AdminSettingsPage() {
           <div><Label>Site Name</Label><Input value={settings.site_name || ''} onChange={e => update('site_name', e.target.value)} /></div>
           <div><Label>Contact Phone</Label><Input value={settings.contact_phone || ''} onChange={e => update('contact_phone', e.target.value)} /></div>
           <div><Label>Contact Email</Label><Input value={settings.contact_email || ''} onChange={e => update('contact_email', e.target.value)} /></div>
-          <div><Label>Contact Address</Label><Input value={settings.contact_address || ''} onChange={e => update('contact_address', e.target.value)} /></div>
-          <div><Label>Delivery Fee</Label><Input type="number" value={settings.delivery_fee || 0} onChange={e => update('delivery_fee', parseFloat(e.target.value))} /></div>
-          <div><Label>Free Delivery Threshold</Label><Input type="number" value={settings.free_delivery_threshold || 0} onChange={e => update('free_delivery_threshold', parseFloat(e.target.value))} /></div>
+          <div><Label>Contact Address</Label><Input value={settings.address || ''} onChange={e => update('address', e.target.value)} /></div>
+          <div><Label>Delivery Fee</Label><Input type="number" value={settings.standard_delivery_fee || 0} onChange={e => update('standard_delivery_fee', parseFloat(e.target.value))} /></div>
+          <div><Label>Free Delivery Threshold</Label><Input type="number" value={settings.free_delivery_min || 0} onChange={e => update('free_delivery_min', parseFloat(e.target.value))} /></div>
           <div><Label>Facebook URL</Label><Input value={settings.facebook_url || ''} onChange={e => update('facebook_url', e.target.value)} /></div>
           <div><Label>Instagram URL</Label><Input value={settings.instagram_url || ''} onChange={e => update('instagram_url', e.target.value)} /></div>
           <div><Label>Twitter URL</Label><Input value={settings.twitter_url || ''} onChange={e => update('twitter_url', e.target.value)} /></div>

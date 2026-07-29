@@ -26,6 +26,19 @@ router.post('/admin', async (req, res) => {
   }
 
   try {
+    // Refuse to run again once an admin already exists — a valid setup_token
+    // alone must not be able to silently create/overwrite admin accounts on
+    // an already-provisioned site. Operators who lose access should reset the
+    // password directly (e.g. via the DB), not through this bootstrap route.
+    const { rows: existingAdmins } = await pool.query(
+      `SELECT id FROM profiles WHERE role = 'admin' LIMIT 1`,
+    );
+    if (existingAdmins.length > 0) {
+      return res.status(403).json({
+        error: 'Setup has already been completed. An admin account already exists for this site.',
+      });
+    }
+
     const hash = await bcrypt.hash(password, 12);
 
     // Upsert admin user

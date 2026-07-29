@@ -36,7 +36,7 @@ export default function AdminOrdersPage() {
 
   const updatePayment = async (id: string, payment_status: string) => {
     try {
-      await api.patch(`/api/orders/${id}/payment`, { payment_status });
+      await api.patch(`/api/orders/${id}/status`, { payment_status });
       toast.success('Payment status updated');
       fetchOrders();
     } catch { toast.error('Failed to update payment status'); }

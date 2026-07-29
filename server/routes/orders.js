@@ -176,7 +176,8 @@ router.get('/track/:orderNumber', async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT o.order_number, o.status, o.payment_status, o.shipping_name,
-              o.shipping_city, o.shipping_region, o.tracking_number, o.created_at,
+              o.shipping_address, o.shipping_city, o.shipping_region,
+              o.tracking_number, o.total_amount, o.created_at,
               json_agg(oi.name ORDER BY oi.created_at) AS item_names
        FROM orders o
        LEFT JOIN order_items oi ON oi.order_id = o.id

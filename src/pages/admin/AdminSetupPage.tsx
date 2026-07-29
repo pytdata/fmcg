@@ -3,7 +3,7 @@
  * Accessible at /admin/setup
  * Protected by the SETUP_TOKEN from server/.env
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,25 @@ export default function AdminSetupPage() {
   const [loading, setLoading]         = useState(false);
   const [success, setSuccess]         = useState(false);
   const [error, setError]             = useState('');
+
+  // Guard against re-running setup on an already-provisioned site — checked
+  // against GET /api/setup/status before the form is shown.
+  const [checkingStatus, setCheckingStatus] = useState(true);
+  const [alreadySetUp, setAlreadySetUp]     = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.get<{ admin_count?: number; setup_disabled?: boolean }>('/api/setup/status')
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.setup_disabled || (data?.admin_count ?? 0) > 0) {
+          setAlreadySetUp(true);
+        }
+      })
+      .catch(() => { /* if status can't be checked, fall back to showing the form */ })
+      .finally(() => { if (!cancelled) setCheckingStatus(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +89,39 @@ export default function AdminSetupPage() {
             Tip: Set <code className="bg-gray-100 px-1 rounded">SETUP_DISABLED=true</code> in{' '}
             <code className="bg-gray-100 px-1 rounded">server/.env</code> to disable this page.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Checking status ──────────────────────────────────────────────────────
+  if (checkingStatus) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <Loader2 className="w-6 h-6 text-amber-600 animate-spin" />
+      </div>
+    );
+  }
+
+  // ── Already set up — refuse to re-run destructively ─────────────────────
+  if (alreadySetUp) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-5">
+            <ShieldCheck className="w-8 h-8 text-amber-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Setup Already Complete</h1>
+          <p className="text-gray-500 text-sm mb-8">
+            An admin account already exists for this site. Sign in below — this page no longer
+            creates or overwrites admin accounts.
+          </p>
+          <Button
+            onClick={() => navigate('/admin')}
+            className="w-full h-11 bg-amber-600 hover:bg-amber-700 text-white font-semibold"
+          >
+            Go to Admin Login <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
         </div>
       </div>
     );

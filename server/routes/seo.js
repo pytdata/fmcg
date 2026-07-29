@@ -200,6 +200,14 @@ router.get('/audit', auth, adminOnly, async (_req, res) => {
       ? Math.round(results.reduce((s, r) => s + r.score, 0) / results.length)
       : 0;
 
+    // Persist freshly computed scores back onto each seo_meta row so the
+    // SEO Content list reflects the latest audit result (not just this snapshot).
+    await Promise.all(
+      results.map((r) =>
+        pool.query('UPDATE seo_meta SET score = $1 WHERE path = $2', [r.score, r.path]),
+      ),
+    );
+
     const { rows: snap } = await pool.query(
       `INSERT INTO seo_audits (overall_score, results)
        VALUES ($1, $2)
