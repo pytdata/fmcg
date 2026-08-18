@@ -1,36 +1,36 @@
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { useCallback, useState } from 'react';
+import { api, getPage } from '@/lib/api';
+import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
 import { Button } from '@/components/ui/button';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Eye, Loader2 } from 'lucide-react';
+import { Eye, Loader2, Store, Truck } from 'lucide-react';
 import type { Order } from '@/types/index';
 
+const PAGE_SIZE = 30;
+
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const fetchOrders = async () => {
-    try {
-      const params = filter !== 'all' ? `?status=${filter}` : '';
-      const data = await api.get<Order[]>(`/api/orders${params}`);
-      setOrders(Array.isArray(data) ? data : []);
-    } catch (err) {
-      toast.error('Failed to load orders');
-    }
-  };
+  const fetchPage = useCallback(async (page: number) => {
+    const params = filter !== 'all' ? `&status=${filter}` : '';
+    const { data, total } = await getPage<Order[]>(`/api/orders?limit=${PAGE_SIZE}&page=${page}${params}`);
+    return { items: Array.isArray(data) ? data : [], total };
+  }, [filter]);
 
-  useEffect(() => { fetchOrders(); }, [filter]);
+  const { items: orders, loading, initialLoading, sentinelRef, reload } = useInfiniteScroll<Order>({
+    fetchPage, resetKey: filter,
+  });
 
   const updateStatus = async (order: Order, status: string) => {
     try {
       await api.patch(`/api/orders/${order.id}/status`, { status });
       toast.success('Status updated');
-      fetchOrders();
+      reload();
     } catch { toast.error('Failed to update status'); }
   };
 
@@ -38,7 +38,7 @@ export default function AdminOrdersPage() {
     try {
       await api.patch(`/api/orders/${id}/status`, { payment_status });
       toast.success('Payment status updated');
-      fetchOrders();
+      reload();
     } catch { toast.error('Failed to update payment status'); }
   };
 
@@ -49,6 +49,14 @@ export default function AdminOrdersPage() {
     delivered: 'bg-green-50 text-green-700',
     cancelled: 'bg-red-50 text-red-700',
   };
+
+  const FulfillmentBadge = ({ mode }: { mode: Order['delivery_mode'] }) => (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
+      ${mode === 'pickup' ? 'bg-emerald-50 text-emerald-700' : 'bg-sky-50 text-sky-700'}`}>
+      {mode === 'pickup' ? <Store className="w-3 h-3" /> : <Truck className="w-3 h-3" />}
+      {mode === 'pickup' ? 'Pickup' : 'Delivery'}
+    </span>
+  );
 
   return (
     <div className="space-y-4">
@@ -74,6 +82,7 @@ export default function AdminOrdersPage() {
               <th className="text-left px-4 py-3 whitespace-nowrap">Date</th>
               <th className="text-left px-4 py-3 whitespace-nowrap">Customer</th>
               <th className="text-left px-4 py-3 whitespace-nowrap">Type</th>
+              <th className="text-left px-4 py-3 whitespace-nowrap">Fulfillment</th>
               <th className="text-left px-4 py-3 whitespace-nowrap">Status</th>
               <th className="text-left px-4 py-3 whitespace-nowrap">Payment</th>
               <th className="text-right px-4 py-3 whitespace-nowrap">Total</th>
@@ -81,8 +90,11 @@ export default function AdminOrdersPage() {
             </tr>
           </thead>
           <tbody>
-            {orders.length === 0 && (
-              <tr><td colSpan={8} className="text-center py-12 text-gray-400">No orders found</td></tr>
+            {initialLoading && (
+              <tr><td colSpan={9} className="text-center py-12 text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></td></tr>
+            )}
+            {!initialLoading && orders.length === 0 && (
+              <tr><td colSpan={9} className="text-center py-12 text-gray-400">No orders found</td></tr>
             )}
             {orders.map(o => (
               <tr key={o.id} className="border-b last:border-0 hover:bg-gray-50">
@@ -91,6 +103,9 @@ export default function AdminOrdersPage() {
                 <td className="px-4 py-3 whitespace-nowrap max-w-[140px] truncate">{o.shipping_name || o.guest_email || 'Guest'}</td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <span className="text-xs font-medium capitalize">{o.order_type}</span>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <FulfillmentBadge mode={o.delivery_mode} />
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   {updatingId === o.id
@@ -135,11 +150,12 @@ export default function AdminOrdersPage() {
                           <div><Label>Status</Label><p className="font-medium capitalize">{o.status}</p></div>
                           <div><Label>Payment</Label><p className="font-medium capitalize">{o.payment_status}</p></div>
                         </div>
+                        <div><Label>Fulfillment</Label><div className="mt-1"><FulfillmentBadge mode={o.delivery_mode} /></div></div>
                         <div><Label>Customer</Label><p>{o.shipping_name || '—'}</p></div>
                         <div><Label>Phone</Label><p>{o.shipping_phone || '—'}</p></div>
                         <div><Label>Email</Label><p>{o.guest_email || '—'}</p></div>
-                        <div><Label>Address</Label>
-                          <p>{[o.shipping_address, o.shipping_city, o.shipping_region].filter(Boolean).join(', ')}</p>
+                        <div><Label>{o.delivery_mode === 'pickup' ? 'Pickup Location' : 'Address'}</Label>
+                          <p>{[o.shipping_address, o.shipping_city, o.shipping_region].filter(Boolean).join(', ') || '—'}</p>
                         </div>
                         {o.tracking_number && (
                           <div><Label>Tracking Number</Label><p className="font-medium">{o.tracking_number}</p></div>
@@ -168,6 +184,12 @@ export default function AdminOrdersPage() {
             ))}
           </tbody>
         </table>
+        <div ref={sentinelRef} className="h-1" />
+        {loading && !initialLoading && (
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-400 py-4">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading more…
+          </div>
+        )}
       </div>
     </div>
   );

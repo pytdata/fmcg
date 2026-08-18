@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
-import { validateCoupon, createOrder } from '@/services/store';
+import { validateCoupon, createOrder, getSiteSettings } from '@/services/store';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { toast } from 'sonner';
-import { ArrowLeft, Banknote, CreditCard, Gift, Loader2, MapPin, Ticket, Truck, X } from 'lucide-react';
+import { ArrowLeft, Banknote, CreditCard, Gift, Loader2, MapPin, Store, Ticket, Truck, X } from 'lucide-react';
 import type { DeliveryLocation, GiftBox } from '@/types/index';
 
 // Draft shape written to localStorage by CustomGiftBoxPage.tsx.
@@ -90,6 +90,14 @@ export default function CheckoutPage() {
   const [selectedLocationId, setSelectedLocationId] = useState<string>('');
   const [locationsLoading, setLocationsLoading] = useState(true);
 
+  // ── Fulfillment: delivery vs in-store pickup ────────────────────────────────
+  const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
+  const [pickupAddress, setPickupAddress] = useState('');
+
+  useEffect(() => {
+    getSiteSettings().then(s => { if (s?.address) setPickupAddress(s.address); });
+  }, []);
+
   const [form, setForm] = useState({
     fullName: profile?.full_name || '',
     phone: profile?.phone || '',
@@ -116,10 +124,10 @@ export default function CheckoutPage() {
       .finally(() => setLocationsLoading(false));
   }, []);
 
-  // ── Delivery fee: location-based, overridden by coupon free shipping ───────
+  // ── Delivery fee: location-based, overridden by coupon free shipping or pickup ─
   const selectedLocation = deliveryLocations.find(l => l.id === selectedLocationId);
-  const baseDeliveryFee = selectedLocation ? Number(selectedLocation.delivery_fee) : 0;
-  const deliveryFee = freeShipping ? 0 : baseDeliveryFee;
+  const baseDeliveryFee = deliveryMode === 'pickup' ? 0 : (selectedLocation ? Number(selectedLocation.delivery_fee) : 0);
+  const deliveryFee = deliveryMode === 'pickup' ? 0 : (freeShipping ? 0 : baseDeliveryFee);
   const total = Math.max(0, checkoutSubtotal + deliveryFee - discount);
 
   const handleLocationChange = (locId: string) => {
@@ -239,10 +247,11 @@ export default function CheckoutPage() {
       coupon_code: couponCode || null,
       shipping_name: form.fullName,
       shipping_phone: form.phone,
-      shipping_address: form.address,
-      shipping_city: form.city,
-      shipping_region: form.region,
+      shipping_address: deliveryMode === 'pickup' ? (pickupAddress || 'Pickup — no delivery address') : form.address,
+      shipping_city: deliveryMode === 'pickup' ? '' : form.city,
+      shipping_region: deliveryMode === 'pickup' ? '' : form.region,
       order_type: orderType,
+      delivery_mode: deliveryMode,
       gift_box_id: giftBoxId,
       custom_gift_box_id: customGiftBoxId,
       notes: giftBoxParam === 'custom' ? (customBox?.personal_message || null) : null,
@@ -250,11 +259,11 @@ export default function CheckoutPage() {
   };
 
   const placeOrder = async () => {
-    if (!form.fullName || !form.phone || !form.address) {
+    if (!form.fullName || !form.phone || (deliveryMode === 'delivery' && !form.address)) {
       toast.error('Please fill in all required shipping fields.');
       return;
     }
-    if (deliveryLocations.length > 0 && !selectedLocationId) {
+    if (deliveryMode === 'delivery' && deliveryLocations.length > 0 && !selectedLocationId) {
       toast.error('Please select a delivery location.');
       return;
     }
@@ -401,23 +410,54 @@ export default function CheckoutPage() {
                   <Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="john@example.com" />
                 </div>
               )}
-              <div className="sm:col-span-2">
-                <Label className="text-sm font-normal">Address *</Label>
-                <Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="House number, street, area" />
-              </div>
+              {deliveryMode === 'delivery' && (
+                <div className="sm:col-span-2">
+                  <Label className="text-sm font-normal">Address *</Label>
+                  <Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="House number, street, area" />
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Delivery Location */}
+          {/* Fulfillment: delivery vs pickup */}
           <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm">
-            <h3 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-amber-600" /> Delivery Location
+            <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <Truck className="w-4 h-4" /> Fulfillment Method
             </h3>
-            <p className="text-xs text-gray-500 mb-4">
-              Select your delivery area — the fee is calculated automatically
-            </p>
+            <div className="space-y-2 mb-4">
+              {[
+                { key: 'delivery' as const, icon: Truck, title: 'Delivery', sub: 'Delivered to your address' },
+                { key: 'pickup' as const, icon: Store, title: 'Pickup', sub: 'Collect your order in person — no delivery fee' },
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setDeliveryMode(opt.key)}
+                  className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-colors
+                    ${deliveryMode === opt.key ? 'border-amber-600 bg-amber-50' : 'border-gray-200 hover:bg-gray-50'}`}
+                >
+                  <div className="w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0">
+                    <div className={`w-2.5 h-2.5 rounded-full ${deliveryMode === opt.key ? 'bg-amber-600' : 'bg-transparent'}`} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-medium flex items-center gap-1.5">
+                      <opt.icon className="w-4 h-4" /> {opt.title}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">{opt.sub}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
 
-            {locationsLoading ? (
+            {deliveryMode === 'pickup' ? (
+              <div className="rounded-lg bg-emerald-50 border border-emerald-100 p-3 text-sm text-emerald-800 flex items-start gap-2">
+                <Store className="w-4 h-4 mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium">Pickup location</p>
+                  <p className="text-xs text-emerald-700 mt-0.5">{pickupAddress || 'We will contact you with pickup details.'}</p>
+                </div>
+              </div>
+            ) : locationsLoading ? (
               <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
                 <Loader2 className="w-4 h-4 animate-spin" /> Loading locations…
               </div>
@@ -426,18 +466,23 @@ export default function CheckoutPage() {
                 No delivery locations configured yet. Contact us to arrange delivery.
               </div>
             ) : (
-              <SearchableSelect
-                value={selectedLocationId}
-                onValueChange={handleLocationChange}
-                options={deliveryLocations.map(loc => ({
-                  value: loc.id,
-                  label: `${loc.name} — ${Number(loc.delivery_fee) === 0 ? 'Free' : `GHS ${Number(loc.delivery_fee).toFixed(2)}`}`,
-                  keywords: loc.region ? [loc.region] : undefined,
-                }))}
-                placeholder="Select your delivery area"
-                searchPlaceholder="Search locations…"
-                className="w-full"
-              />
+              <>
+                <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5" /> Select your delivery area — the fee is calculated automatically
+                </p>
+                <SearchableSelect
+                  value={selectedLocationId}
+                  onValueChange={handleLocationChange}
+                  options={deliveryLocations.map(loc => ({
+                    value: loc.id,
+                    label: `${loc.name} — ${Number(loc.delivery_fee) === 0 ? 'Free' : `GHS ${Number(loc.delivery_fee).toFixed(2)}`}`,
+                    keywords: loc.region ? [loc.region] : undefined,
+                  }))}
+                  placeholder="Select your delivery area"
+                  searchPlaceholder="Search locations…"
+                  className="w-full"
+                />
+              </>
             )}
           </div>
 
@@ -597,14 +642,16 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between text-gray-600">
                 <span className="flex items-center gap-1">
-                  <Truck className="w-3.5 h-3.5" />
-                  Delivery
-                  {selectedLocation && (
+                  {deliveryMode === 'pickup' ? <Store className="w-3.5 h-3.5" /> : <Truck className="w-3.5 h-3.5" />}
+                  {deliveryMode === 'pickup' ? 'Pickup' : 'Delivery'}
+                  {deliveryMode === 'delivery' && selectedLocation && (
                     <span className="text-xs text-gray-400">({selectedLocation.name})</span>
                   )}
                 </span>
                 <span>
-                  {deliveryFee === 0 ? (
+                  {deliveryMode === 'pickup' ? (
+                    <span className="text-emerald-600">Free</span>
+                  ) : deliveryFee === 0 ? (
                     <span className="text-emerald-600 flex items-center gap-1">
                       Free
                       {freeShipping && (
@@ -634,7 +681,7 @@ export default function CheckoutPage() {
             <Button
               className="w-full bg-amber-600 hover:bg-amber-700 h-11"
               onClick={placeOrder}
-              disabled={loading || (deliveryLocations.length > 0 && !selectedLocationId)}
+              disabled={loading || (deliveryMode === 'delivery' && deliveryLocations.length > 0 && !selectedLocationId)}
             >
               {loading
                 ? 'Processing…'
@@ -643,7 +690,7 @@ export default function CheckoutPage() {
                   : `Place Order — GHS ${total.toFixed(2)}`}
             </Button>
 
-            {deliveryLocations.length === 0 && !locationsLoading && (
+            {deliveryMode === 'delivery' && deliveryLocations.length === 0 && !locationsLoading && (
               <p className="text-xs text-amber-600 mt-2 text-center flex items-center justify-center gap-1">
                 <MapPin className="w-3 h-3" /> No delivery locations set up yet
               </p>

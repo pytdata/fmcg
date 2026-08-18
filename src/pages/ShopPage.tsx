@@ -1,14 +1,59 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { getCategories, getProducts } from '@/services/store';
+import { getCategories, getProductsPage } from '@/services/store';
+import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
 import Seo from '@/components/common/Seo';
 import ProductCard from '@/components/common/ProductCard';
 import { Input } from '@/components/ui/input';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Badge } from '@/components/ui/badge';
-import { Search, SlidersHorizontal, Tag, Package, ChevronDown } from 'lucide-react';
+import { Search, SlidersHorizontal, Tag, Package, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { Category, Product } from '@/types/index';
+
+const PAGE_SIZE = 24;
+
+// ── Numbered page-jump controls (used alongside infinite scroll) ───────────────
+function PageNumbers({ page, totalPages, onSelect }: { page: number; totalPages: number; onSelect: (p: number) => void }) {
+  if (totalPages <= 1) return null;
+
+  const nums = new Set<number>([1, totalPages, page, page - 1, page + 1]);
+  const pages = [...nums].filter(n => n >= 1 && n <= totalPages).sort((a, b) => a - b);
+
+  return (
+    <div className="flex items-center justify-center gap-1 mt-8">
+      <button
+        type="button"
+        onClick={() => onSelect(Math.max(1, page - 1))}
+        disabled={page === 1}
+        className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-transparent"
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+      {pages.map((p, i) => (
+        <span key={p} className="flex items-center">
+          {i > 0 && p - pages[i - 1] > 1 && <span className="px-1 text-gray-300">…</span>}
+          <button
+            type="button"
+            onClick={() => onSelect(p)}
+            className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors
+              ${p === page ? 'bg-amber-600 text-white' : 'text-gray-600 hover:bg-gray-50 border border-gray-200'}`}
+          >
+            {p}
+          </button>
+        </span>
+      ))}
+      <button
+        type="button"
+        onClick={() => onSelect(Math.min(totalPages, page + 1))}
+        disabled={page === totalPages}
+        className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:hover:bg-transparent"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface PricingTag {
@@ -143,15 +188,13 @@ export default function ShopPage() {
 
   const [flat, setFlat] = useState<Category[]>([]);
   const [tree, setTree] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [pricingTags, setPricingTags] = useState<PricingTag[]>([]);
   const [selectedTag, setSelectedTag] = useState<string>(tagParam);
 
   // Keep the selected tag in sync with the ?tag= URL param (so tag links work).
   useEffect(() => { setSelectedTag(tagParam); }, [tagParam]);
   const [search, setSearch] = useState(searchQuery);
-  const [sort, setSort] = useState('newest');
-  const [loading, setLoading] = useState(true);
+  const [sort, setSort] = useState<'newest' | 'price-low' | 'price-high' | 'name'>('newest');
 
   // active category id derived from URL param
   const activeCategory = flat.find(c => c.slug === categoryParam) || null;
@@ -166,11 +209,29 @@ export default function ShopPage() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    setLoading(true);
-    getProducts({ categorySlug: categoryParam || undefined, search: searchQuery || undefined })
-      .then(data => { setProducts(data); setLoading(false); });
-  }, [categoryParam, searchQuery]);
+  // Server-driven fetch — sort/tag/category/search are all applied by the API so
+  // pagination stays correct in combination with any of them.
+  const fetchPage = useCallback(
+    async (page: number) => {
+      const { products, total } = await getProductsPage({
+        categorySlug: categoryParam || undefined,
+        search: searchQuery || undefined,
+        tag: selectedTag || undefined,
+        sort,
+        limit: PAGE_SIZE,
+        page,
+      });
+      return { items: products, total };
+    },
+    [categoryParam, searchQuery, selectedTag, sort],
+  );
+  const resetKey = `${categoryParam}|${searchQuery}|${selectedTag}|${sort}`;
+  const {
+    items: products, total, page, initialLoading, loading: loadingMore,
+    sentinelRef, goToPage,
+  } = useInfiniteScroll<Product>({ fetchPage, resetKey });
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const handleCategorySelect = (id: string, slug: string) => {
     void id; // used for active tracking; slug drives URL
@@ -181,16 +242,10 @@ export default function ShopPage() {
     }
   };
 
-  const filteredByTag = selectedTag
-    ? products.filter(p => (p as Product & { pricing_tags?: { slug: string }[] }).pricing_tags?.some(t => t.slug === selectedTag))
-    : products;
-
-  const sortedProducts = [...filteredByTag].sort((a, b) => {
-    if (sort === 'price-low') return a.price - b.price;
-    if (sort === 'price-high') return b.price - a.price;
-    if (sort === 'name') return a.name.localeCompare(b.name);
-    return 0;
-  });
+  const jumpToPage = (p: number) => {
+    goToPage(p);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   void navigate; // available if needed
 
@@ -252,7 +307,7 @@ export default function ShopPage() {
               <h1 className="text-xl font-bold text-gray-900">{activeCategory?.name || 'All Products'}</h1>
               <p className="text-sm text-gray-500 flex items-center gap-1">
                 <Package className="w-3.5 h-3.5" />
-                {sortedProducts.length} product{sortedProducts.length !== 1 ? 's' : ''}
+                {total} product{total !== 1 ? 's' : ''}
               </p>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -268,7 +323,7 @@ export default function ShopPage() {
               </div>
               <SearchableSelect
                 value={sort}
-                onValueChange={setSort}
+                onValueChange={v => setSort(v as typeof sort)}
                 options={[
                   { value: 'newest', label: 'Newest' },
                   { value: 'price-low', label: 'Price: Low to High' },
@@ -302,16 +357,29 @@ export default function ShopPage() {
             </div>
           )}
 
-          {loading ? (
+          {initialLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="bg-white rounded-xl border border-gray-100 h-64 animate-pulse" />
               ))}
             </div>
-          ) : sortedProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5">
-              {sortedProducts.map(p => <ProductCard key={p.id} product={p} />)}
-            </div>
+          ) : products.length > 0 ? (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5">
+                {products.map(p => <ProductCard key={p.id} product={p} />)}
+              </div>
+
+              {/* Infinite-scroll trigger — loads the next page automatically */}
+              <div ref={sentinelRef} className="h-1" />
+              {loadingMore && (
+                <div className="flex items-center justify-center gap-2 text-sm text-gray-400 py-6">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Loading more…
+                </div>
+              )}
+
+              {/* Direct page-number navigation, alongside infinite scroll above */}
+              <PageNumbers page={page} totalPages={totalPages} onSelect={jumpToPage} />
+            </>
           ) : (
             <div className="text-center py-16">
               <Package className="w-10 h-10 text-gray-200 mx-auto mb-3" />

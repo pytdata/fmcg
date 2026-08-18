@@ -194,6 +194,7 @@ CREATE TABLE IF NOT EXISTS orders (
   tracking_number         TEXT,
   notes                   TEXT,
   order_type              TEXT DEFAULT 'regular' CHECK (order_type IN ('regular','gift_box','custom_gift_box')),
+  delivery_mode           TEXT NOT NULL DEFAULT 'delivery' CHECK (delivery_mode IN ('delivery','pickup')),
   gift_box_id             UUID REFERENCES gift_boxes(id) ON DELETE SET NULL,
   custom_gift_box_id      UUID REFERENCES custom_gift_boxes(id) ON DELETE SET NULL,
   created_at              TIMESTAMPTZ DEFAULT now(),

@@ -38,7 +38,7 @@ const DEFAULT_MODULES = [
 ];
 
 // Bump this whenever new migration steps are added so they run once per DB.
-const SCHEMA_VERSION = '9';
+const SCHEMA_VERSION = '10';
 
 // Default testimonials (seeded once so the section isn't empty).
 const DEFAULT_TESTIMONIALS = [
@@ -607,6 +607,11 @@ async function runMigrations() {
         }
       }
     }
+
+    // ── 020: order delivery mode (delivery vs in-store pickup) ────────────────
+    await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_mode TEXT NOT NULL DEFAULT 'delivery'`);
+    await client.query(`ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_delivery_mode_check`);
+    await client.query(`ALTER TABLE orders ADD CONSTRAINT orders_delivery_mode_check CHECK (delivery_mode IN ('delivery','pickup'))`);
 
     // ── Mark this schema version complete so the heavy body is skipped next time.
     await client.query(

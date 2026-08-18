@@ -103,6 +103,26 @@ export function invalidateCache(prefix?: string) {
   for (const key of _cache.keys()) if (key.startsWith(prefix)) _cache.delete(key);
 }
 
+// GET that also returns the X-Total-Count header — used by paginated / infinite-
+// scroll list endpoints (products, admin products/orders/customers, …).
+export async function getPage<T>(path: string): Promise<{ data: T; total: number }> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${BASE}${path}`, { headers });
+  let data: unknown;
+  try { data = await res.json(); } catch { data = undefined; }
+
+  if (!res.ok) {
+    const msg = (data as { error?: string })?.error || `HTTP ${res.status}`;
+    throw new Error(msg);
+  }
+
+  const totalHeader = res.headers.get('X-Total-Count');
+  return { data: data as T, total: totalHeader ? parseInt(totalHeader, 10) : 0 };
+}
+
 // Multipart upload helper
 export async function uploadImage(path: string, file: File): Promise<{ url?: string; urls?: string[] }> {
   const token = getToken();

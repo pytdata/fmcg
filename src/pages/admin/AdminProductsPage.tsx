@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
-import { api } from '@/lib/api';
+import { api, getPage } from '@/lib/api';
+import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
+import { useDebounce } from '@/hooks/use-debounce';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -280,35 +282,35 @@ function VariationTypeCard({ vtype, onDelete, onAddOption, onDeleteOption }: {
   );
 }
 
+const PAGE_SIZE = 40;
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [pricingTags, setPricingTags] = useState<PricingTagLite[]>([]);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [form, setForm] = useState<ProductForm>(EMPTY_FORM);
   const [editId, setEditId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
 
-  const load = async () => {
-    const [prods, cats, tags] = await Promise.all([
-      api.get<Product[]>('/api/products/admin/all').catch(() => []),
-      api.get<Category[]>('/api/categories').catch(() => []),
-      api.get<PricingTagLite[]>('/api/pricing-tags/admin/all').catch(() => []),
-    ]);
-    setProducts(Array.isArray(prods) ? prods : []);
-    setCategories(Array.isArray(cats) ? cats : []);
-    setPricingTags(Array.isArray(tags) ? tags : []);
-  };
+  useEffect(() => {
+    api.get<Category[]>('/api/categories').then(d => setCategories(Array.isArray(d) ? d : [])).catch(() => {});
+    api.get<PricingTagLite[]>('/api/pricing-tags/admin/all').then(d => setPricingTags(Array.isArray(d) ? d : [])).catch(() => {});
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  const fetchPage = useCallback(async (page: number) => {
+    const params = new URLSearchParams({ limit: String(PAGE_SIZE), page: String(page) });
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    const { data, total } = await getPage<Product[]>(`/api/products/admin/all?${params}`);
+    return { items: Array.isArray(data) ? data : [], total };
+  }, [debouncedSearch]);
 
-  const filtered = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    (p.sku || '').toLowerCase().includes(search.toLowerCase()),
-  );
+  const {
+    items: products, total, loading, initialLoading, sentinelRef, reload,
+  } = useInfiniteScroll<Product>({ fetchPage, resetKey: debouncedSearch });
 
   // Category options: list ONLY sub-categories (parent_id set), grouped under their
   // parent (main) category name. If no sub-categories exist, fall back to top-level.
@@ -377,7 +379,7 @@ export default function AdminProductsPage() {
         await api.put<Product>(`/api/products/${editId}`, payload);
         toast.success('Product updated');
         setOpen(false);
-        load();
+        reload();
       } else {
         const created = await api.post<Product>('/api/products', payload);
         toast.success('Product created — you can now add variations');
@@ -385,7 +387,7 @@ export default function AdminProductsPage() {
         setEditId(created.id);
         setForm(f => ({ ...f, images, video_urls: videoUrls }));
         setActiveTab('variations');
-        load();
+        reload();
       }
     } catch (err) {
       toast.error((err as Error).message);
@@ -395,7 +397,7 @@ export default function AdminProductsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this product?')) return;
     await api.delete(`/api/products/${id}`);
-    toast.success('Deleted'); load();
+    toast.success('Deleted'); reload();
   };
 
   const autoSlug = (name: string) =>
@@ -406,7 +408,10 @@ export default function AdminProductsPage() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <h1 className="text-xl font-bold text-gray-900">Products</h1>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Products</h1>
+          <p className="text-xs text-gray-400">{total} total</p>
+        </div>
         <Button onClick={openCreate} className="bg-amber-600 hover:bg-amber-700 text-white">
           <Plus className="w-4 h-4 mr-1" /> New Product
         </Button>
@@ -431,7 +436,10 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filtered.map(p => (
+              {initialLoading && (
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></td></tr>
+              )}
+              {products.map(p => (
                 <tr key={p.id} className="hover:bg-gray-50/50">
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center gap-3">
@@ -481,12 +489,18 @@ export default function AdminProductsPage() {
                   </td>
                 </tr>
               ))}
-              {!filtered.length && (
+              {!initialLoading && !products.length && (
                 <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-400 text-sm">No products found</td></tr>
               )}
             </tbody>
           </table>
         </div>
+        <div ref={sentinelRef} className="h-1" />
+        {loading && !initialLoading && (
+          <div className="flex items-center justify-center gap-2 text-sm text-gray-400 py-4">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading more…
+          </div>
+        )}
       </div>
 
       {/* Create / Edit Dialog */}
