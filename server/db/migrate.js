@@ -38,7 +38,7 @@ const DEFAULT_MODULES = [
 ];
 
 // Bump this whenever new migration steps are added so they run once per DB.
-const SCHEMA_VERSION = '10';
+const SCHEMA_VERSION = '12';
 
 // Default testimonials (seeded once so the section isn't empty).
 const DEFAULT_TESTIMONIALS = [
@@ -612,6 +612,33 @@ async function runMigrations() {
     await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_mode TEXT NOT NULL DEFAULT 'delivery'`);
     await client.query(`ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_delivery_mode_check`);
     await client.query(`ALTER TABLE orders ADD CONSTRAINT orders_delivery_mode_check CHECK (delivery_mode IN ('delivery','pickup'))`);
+
+    // ── 021: one Paystack reference can only ever pay for one order — closes a
+    // replay hole where a single successful reference could otherwise be
+    // resubmitted against other orders of the same amount. NULL-safe (COD/
+    // unpaid orders all have paystack_trx_ref = NULL, and Postgres allows
+    // unlimited NULLs in a UNIQUE column). Isolated in a try/catch: a database
+    // that somehow already has duplicate refs shouldn't block every later
+    // migration step and app_meta.schema_version from ever being marked done.
+    try {
+      await client.query(`ALTER TABLE orders ADD CONSTRAINT orders_paystack_trx_ref_key UNIQUE (paystack_trx_ref)`);
+    } catch (dupErr) {
+      if (dupErr.code !== '42P07') { // 42P07 = relation already exists (constraint's backing index) — fine
+        console.error('[migrations] Could not add unique constraint on paystack_trx_ref:', dupErr.message);
+      }
+    }
+
+    // ── 022: idempotency key for order creation — lets a retried/duplicated
+    // checkout submission return the original order instead of creating a
+    // second one. NULL-safe unique column, same reasoning as paystack_trx_ref.
+    await client.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS idempotency_key TEXT`);
+    try {
+      await client.query(`ALTER TABLE orders ADD CONSTRAINT orders_idempotency_key_key UNIQUE (idempotency_key)`);
+    } catch (dupErr) {
+      if (dupErr.code !== '42P07') {
+        console.error('[migrations] Could not add unique constraint on idempotency_key:', dupErr.message);
+      }
+    }
 
     // ── Mark this schema version complete so the heavy body is skipped next time.
     await client.query(

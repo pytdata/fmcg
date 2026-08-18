@@ -32,6 +32,7 @@ router.post('/', optionalAuth, async (req, res) => {
     shipping_region, guest_email, guest_phone, payment_method,
     subtotal, discount_amount, delivery_fee, total_amount, coupon_code,
     order_type, gift_box_id, custom_gift_box_id, notes, delivery_mode,
+    idempotency_key,
   } = req.body;
 
   if (!items?.length) return res.status(400).json({ error: 'Order must have at least one item' });
@@ -39,6 +40,17 @@ router.post('/', optionalAuth, async (req, res) => {
   const mode = delivery_mode === 'pickup' ? 'pickup' : 'delivery';
   // Pickup orders never carry a delivery fee, regardless of what the client sent.
   const resolvedDeliveryFee = mode === 'pickup' ? 0 : (delivery_fee || 0);
+
+  // A double-submitted / retried checkout (double-click, client timeout-and-retry,
+  // browser back-then-resubmit) must not create two orders for the same cart.
+  // The frontend sends one idempotency_key per checkout attempt; if an order
+  // already exists for it, return that order instead of creating another.
+  if (idempotency_key) {
+    const { rows: [existing] } = await pool.query(
+      'SELECT * FROM orders WHERE idempotency_key = $1', [idempotency_key],
+    );
+    if (existing) return res.status(200).json(existing);
+  }
 
   const client = await pool.connect();
   try {
@@ -51,8 +63,8 @@ router.post('/', optionalAuth, async (req, res) => {
           payment_method, subtotal, discount_amount, delivery_fee, total_amount,
           coupon_code, shipping_name, shipping_phone, shipping_address,
           shipping_city, shipping_region, order_type, gift_box_id, custom_gift_box_id, notes,
-          delivery_mode)
-       VALUES ($1,$2,$3,$4,'pending','pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+          delivery_mode, idempotency_key)
+       VALUES ($1,$2,$3,$4,'pending','pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
        RETURNING *`,
       [num, req.user?.id || null, guest_email || null, guest_phone || null,
        payment_method || 'paystack', subtotal, discount_amount || 0,
@@ -60,24 +72,35 @@ router.post('/', optionalAuth, async (req, res) => {
        shipping_name, shipping_phone, shipping_address,
        shipping_city, shipping_region, order_type || 'regular',
        gift_box_id || null, custom_gift_box_id || null, notes || null,
-       mode],
+       mode, idempotency_key || null],
     );
 
     // Insert order items
     for (const item of items) {
+      // Atomic check-and-decrement: the WHERE clause makes the stock check and
+      // the decrement one indivisible operation, so two concurrent orders for
+      // the last unit of a product can't both succeed (the old GREATEST(0, ...)
+      // version let stock go negative-in-spirit by silently clamping to zero
+      // while still letting every order through — an oversell bug).
+      if (item.product_id) {
+        const { rows: [stockRow] } = await client.query(
+          `UPDATE products SET stock_quantity = stock_quantity - $1
+           WHERE id = $2 AND stock_quantity >= $1
+           RETURNING stock_quantity`,
+          [item.quantity, item.product_id],
+        );
+        if (!stockRow) {
+          const err = new Error(`Insufficient stock for "${item.name}"`);
+          err.code = 'INSUFFICIENT_STOCK';
+          throw err;
+        }
+      }
       await client.query(
         `INSERT INTO order_items (order_id, product_id, name, quantity, unit_price, total_price, image_url)
          VALUES ($1,$2,$3,$4,$5,$6,$7)`,
         [order.id, item.product_id || null, item.name, item.quantity,
          item.unit_price, item.total_price, item.image_url || null],
       );
-      // Decrement stock
-      if (item.product_id) {
-        await client.query(
-          'UPDATE products SET stock_quantity = GREATEST(0, stock_quantity - $1) WHERE id = $2',
-          [item.quantity, item.product_id],
-        );
-      }
     }
 
     // Increment coupon usage
@@ -104,6 +127,16 @@ router.post('/', optionalAuth, async (req, res) => {
     res.status(201).json(order);
   } catch (err) {
     await client.query('ROLLBACK');
+    if (err.code === '23505' && idempotency_key) {
+      // Lost a race to a concurrent identical submission — return its order.
+      const { rows: [existing] } = await pool.query(
+        'SELECT * FROM orders WHERE idempotency_key = $1', [idempotency_key],
+      );
+      if (existing) return res.status(200).json(existing);
+    }
+    if (err.code === 'INSUFFICIENT_STOCK') {
+      return res.status(409).json({ error: err.message });
+    }
     console.error('[orders/create]', err);
     res.status(500).json({ error: 'Failed to place order' });
   } finally {
@@ -134,12 +167,32 @@ router.post('/verify-payment', optionalAuth, async (req, res) => {
       return res.json({ verified: false, status: txn?.status || 'unknown' });
     }
 
-    const { rows: [updated] } = await pool.query(
-      `UPDATE orders SET payment_status='paid', status='processing',
-         paystack_trx_ref=$1, updated_at=now()
-       WHERE id=$2 AND status='pending' RETURNING *`,
-      [reference, orderId],
-    );
+    // A "success" status alone isn't enough — reference is client-supplied, so
+    // without checking amount/currency a paid reference for any amount (even one
+    // from an unrelated transaction) could be replayed to mark this order paid.
+    const expectedAmount = Math.round(Number(order.total_amount) * 100);
+    if (txn.amount !== expectedAmount || txn.currency !== 'GHS') {
+      console.error('[orders/verify] amount/currency mismatch', {
+        orderId, reference, expected: expectedAmount, got: txn.amount, currency: txn.currency,
+      });
+      return res.status(400).json({ verified: false, error: 'Payment amount does not match order total' });
+    }
+
+    let updated;
+    try {
+      ({ rows: [updated] } = await pool.query(
+        `UPDATE orders SET payment_status='paid', status='processing',
+           paystack_trx_ref=$1, updated_at=now()
+         WHERE id=$2 AND status='pending' RETURNING *`,
+        [reference, orderId],
+      ));
+    } catch (updateErr) {
+      if (updateErr.code === '23505') { // unique violation on paystack_trx_ref
+        console.error('[orders/verify] reference already used on another order', { orderId, reference });
+        return res.status(409).json({ verified: false, error: 'This payment reference has already been used' });
+      }
+      throw updateErr;
+    }
 
     if (!updated) return res.json({ verified: true, alreadyProcessed: true });
 

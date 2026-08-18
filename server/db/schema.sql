@@ -180,7 +180,7 @@ CREATE TABLE IF NOT EXISTS orders (
                           CHECK (payment_status IN ('pending','paid','failed','refunded')),
   payment_method          TEXT DEFAULT 'paystack',
   payment_reference       TEXT,
-  paystack_trx_ref        TEXT,
+  paystack_trx_ref        TEXT UNIQUE,
   subtotal                NUMERIC(10,2) NOT NULL DEFAULT 0,
   discount_amount         NUMERIC(10,2) DEFAULT 0,
   delivery_fee            NUMERIC(10,2) DEFAULT 0,
@@ -197,6 +197,7 @@ CREATE TABLE IF NOT EXISTS orders (
   delivery_mode           TEXT NOT NULL DEFAULT 'delivery' CHECK (delivery_mode IN ('delivery','pickup')),
   gift_box_id             UUID REFERENCES gift_boxes(id) ON DELETE SET NULL,
   custom_gift_box_id      UUID REFERENCES custom_gift_boxes(id) ON DELETE SET NULL,
+  idempotency_key         TEXT UNIQUE,
   created_at              TIMESTAMPTZ DEFAULT now(),
   updated_at              TIMESTAMPTZ DEFAULT now()
 );
