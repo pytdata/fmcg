@@ -217,6 +217,7 @@ export interface Order {
   notes?: string;
   order_type: 'regular' | 'gift_box' | 'custom_gift_box';
   delivery_mode: 'delivery' | 'pickup';
+  idempotency_key?: string | null;
   gift_box_id?: string | null;
   custom_gift_box_id?: string | null;
   created_at: string;

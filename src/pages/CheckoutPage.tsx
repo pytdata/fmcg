@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -48,6 +48,11 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const giftBoxParam = searchParams.get('giftbox'); // 'curated' | 'custom' | null
+
+  // One key per checkout attempt (this component instance) — sent with every
+  // placeOrder() call so a double-click or a retry-after-timeout resubmission
+  // returns the order already created instead of placing a duplicate.
+  const idempotencyKeyRef = useRef(crypto.randomUUID());
 
   // ── Gift box checkout intent (stashed in localStorage by GiftBoxDetailPage /
   // CustomGiftBoxPage — this checkout may have zero cart items in this mode) ──
@@ -255,6 +260,7 @@ export default function CheckoutPage() {
       gift_box_id: giftBoxId,
       custom_gift_box_id: customGiftBoxId,
       notes: giftBoxParam === 'custom' ? (customBox?.personal_message || null) : null,
+      idempotency_key: idempotencyKeyRef.current,
     };
   };
 
@@ -313,26 +319,33 @@ export default function CheckoutPage() {
           setLoading(false);
           navigate(`/order-confirmation?order=${order.order_number}&mode=paystack`);
         },
-        callback: async (response) => {
-          toast.info('Verifying payment…');
-          try {
-            const result = await api.post<{ verified: boolean; order?: { order_number: string } }>(
-              '/api/orders/verify-payment',
-              { reference: response.reference, orderId: order.id },
-            );
-            await clearPurchasedState();
-            if (result.verified) {
-              toast.success('Payment confirmed! 🎉');
-              navigate(`/order-confirmation?order=${order.order_number}&mode=paystack&status=paid`);
-            } else {
-              toast.error('Payment verification failed. Please contact support.');
-              navigate(`/order-confirmation?order=${order.order_number}&mode=paystack&status=failed`);
+        // Paystack Inline validates this with an internal isFunction() check that
+        // rejects async functions (their [object AsyncFunction] tag isn't
+        // [object Function]) — .setup() throws synchronously if this is async,
+        // silently breaking every card payment. Keep it a plain function and run
+        // the actual verification in an inner async IIFE instead.
+        callback: (response) => {
+          void (async () => {
+            toast.info('Verifying payment…');
+            try {
+              const result = await api.post<{ verified: boolean; order?: { order_number: string } }>(
+                '/api/orders/verify-payment',
+                { reference: response.reference, orderId: order.id },
+              );
+              await clearPurchasedState();
+              if (result.verified) {
+                toast.success('Payment confirmed! 🎉');
+                navigate(`/order-confirmation?order=${order.order_number}&mode=paystack&status=paid`);
+              } else {
+                toast.error('Payment verification failed. Please contact support.');
+                navigate(`/order-confirmation?order=${order.order_number}&mode=paystack&status=failed`);
+              }
+            } catch (err) {
+              console.error('Payment verification error:', err);
+              await clearPurchasedState();
+              navigate(`/order-confirmation?order=${order.order_number}&mode=paystack`);
             }
-          } catch (err) {
-            console.error('Payment verification error:', err);
-            await clearPurchasedState();
-            navigate(`/order-confirmation?order=${order.order_number}&mode=paystack`);
-          }
+          })();
         },
       });
       handler.openIframe();
@@ -378,8 +391,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <script src="https://js.paystack.co/v1/inline.js" async />
-
       <Link
         to={giftBoxParam === 'curated' ? '/gift-boxes' : giftBoxParam === 'custom' ? '/gift-boxes/custom' : '/cart'}
         className="text-sm text-gray-500 hover:text-amber-600 flex items-center gap-1 mb-4"
