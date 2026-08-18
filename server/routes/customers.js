@@ -12,6 +12,11 @@ router.get('/', auth, adminOnly, async (req, res) => {
       params.push(`%${search}%`);
       wheres.push(`(full_name ILIKE $${params.length} OR email ILIKE $${params.length})`);
     }
+    const { rows: countRows } = await pool.query(
+      `SELECT COUNT(*) FROM profiles WHERE ${wheres.join(' AND ')}`,
+      params,
+    );
+
     const offset = (parseInt(page) - 1) * parseInt(limit);
     params.push(parseInt(limit), offset);
 
@@ -22,6 +27,7 @@ router.get('/', auth, adminOnly, async (req, res) => {
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params,
     );
+    res.set('X-Total-Count', countRows[0].count);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch customers' });

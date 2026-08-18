@@ -31,10 +31,14 @@ router.post('/', optionalAuth, async (req, res) => {
     items, shipping_name, shipping_phone, shipping_address, shipping_city,
     shipping_region, guest_email, guest_phone, payment_method,
     subtotal, discount_amount, delivery_fee, total_amount, coupon_code,
-    order_type, gift_box_id, custom_gift_box_id, notes,
+    order_type, gift_box_id, custom_gift_box_id, notes, delivery_mode,
   } = req.body;
 
   if (!items?.length) return res.status(400).json({ error: 'Order must have at least one item' });
+
+  const mode = delivery_mode === 'pickup' ? 'pickup' : 'delivery';
+  // Pickup orders never carry a delivery fee, regardless of what the client sent.
+  const resolvedDeliveryFee = mode === 'pickup' ? 0 : (delivery_fee || 0);
 
   const client = await pool.connect();
   try {
@@ -46,15 +50,17 @@ router.post('/', optionalAuth, async (req, res) => {
          (order_number, user_id, guest_email, guest_phone, status, payment_status,
           payment_method, subtotal, discount_amount, delivery_fee, total_amount,
           coupon_code, shipping_name, shipping_phone, shipping_address,
-          shipping_city, shipping_region, order_type, gift_box_id, custom_gift_box_id, notes)
-       VALUES ($1,$2,$3,$4,'pending','pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+          shipping_city, shipping_region, order_type, gift_box_id, custom_gift_box_id, notes,
+          delivery_mode)
+       VALUES ($1,$2,$3,$4,'pending','pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
        RETURNING *`,
       [num, req.user?.id || null, guest_email || null, guest_phone || null,
        payment_method || 'paystack', subtotal, discount_amount || 0,
-       delivery_fee || 0, total_amount, coupon_code || null,
+       resolvedDeliveryFee, total_amount, coupon_code || null,
        shipping_name, shipping_phone, shipping_address,
        shipping_city, shipping_region, order_type || 'regular',
-       gift_box_id || null, custom_gift_box_id || null, notes || null],
+       gift_box_id || null, custom_gift_box_id || null, notes || null,
+       mode],
     );
 
     // Insert order items
@@ -204,6 +210,11 @@ router.get('/', auth, adminOnly, async (req, res) => {
       params.push(status);
       wheres.push(`o.status = $${params.length}`);
     }
+    const { rows: countRows } = await pool.query(
+      `SELECT COUNT(*) FROM orders o ${wheres.length ? 'WHERE ' + wheres.join(' AND ') : ''}`,
+      params,
+    );
+
     const offset = (parseInt(page) - 1) * parseInt(limit);
     params.push(parseInt(limit), offset);
 
@@ -217,6 +228,7 @@ router.get('/', auth, adminOnly, async (req, res) => {
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params,
     );
+    res.set('X-Total-Count', countRows[0].count);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch orders' });

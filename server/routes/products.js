@@ -67,28 +67,57 @@ async function attachProductExtras(rows) {
   });
 }
 
-// GET /api/products
+// Sort keys the shop UI can request, mapped to a safe (non-user-controlled) ORDER BY.
+const PRODUCT_SORTS = {
+  newest: 'p.created_at DESC',
+  'price-low': 'p.price ASC',
+  'price-high': 'p.price DESC',
+  name: 'p.name ASC',
+};
+
+// GET /api/products — paginated; total row count (pre-LIMIT) is returned via
+// X-Total-Count so the shop UI can render page numbers / know when to stop
+// infinite-scrolling.
 router.get('/', async (req, res) => {
   try {
-    const { category, featured, search, limit = 50, page = 1 } = req.query;
+    const { category, featured, search, tag, sort, limit = 50, page = 1 } = req.query;
     const params = [];
     const wheres = ['p.is_active = true'];
 
     if (category) { params.push(category); wheres.push(`c.slug = $${params.length}`); }
     if (featured === 'true') wheres.push('p.is_featured = true');
     if (search) { params.push(`%${search}%`); wheres.push(`p.name ILIKE $${params.length}`); }
+    if (tag) {
+      params.push(tag);
+      wheres.push(`EXISTS (
+        SELECT 1 FROM product_pricing_tags ppt
+        JOIN pricing_tags pt ON pt.id = ppt.tag_id
+        WHERE ppt.product_id = p.id AND pt.slug = $${params.length} AND pt.is_active = true
+          AND (pt.valid_until IS NULL OR pt.valid_until > now())
+      )`);
+    }
+    const whereClause = wheres.join(' AND ');
+    const orderBy = PRODUCT_SORTS[sort] || PRODUCT_SORTS.newest;
 
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-    params.push(parseInt(limit)); params.push(offset);
+    const { rows: countRows } = await pool.query(
+      `SELECT COUNT(*) FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE ${whereClause}`,
+      params,
+    );
+
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const offset = (pageNum - 1) * limitNum;
+    const listParams = [...params, limitNum, offset];
 
     const { rows } = await pool.query(
       `SELECT p.*, c.name AS category_name, c.slug AS category_slug
        FROM products p LEFT JOIN categories c ON p.category_id = c.id
-       WHERE ${wheres.join(' AND ')}
-       ORDER BY p.created_at DESC
-       LIMIT $${params.length - 1} OFFSET $${params.length}`,
-      params,
+       WHERE ${whereClause}
+       ORDER BY ${orderBy}
+       LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
+      listParams,
     );
+    res.set('X-Total-Count', countRows[0].count);
     res.json(await attachProductExtras(rows));
   } catch (err) {
     console.error('[products/list]', err);
@@ -96,14 +125,42 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/products/admin/all
-router.get('/admin/all', auth, adminOnly, async (_req, res) => {
+// GET /api/products/admin/all — paginated (limit/page); X-Total-Count as above.
+// Omit ?limit to get everything at once (kept for any existing internal callers).
+router.get('/admin/all', auth, adminOnly, async (req, res) => {
   try {
+    const { limit, page = 1, search } = req.query;
+    const limitNum = limit ? Math.min(200, Math.max(1, parseInt(limit) || 50)) : null;
+    const pageNum = Math.max(1, parseInt(page) || 1);
+
+    const params = [];
+    const wheres = [];
+    if (search) {
+      params.push(`%${search}%`);
+      wheres.push(`(p.name ILIKE $${params.length} OR p.sku ILIKE $${params.length})`);
+    }
+    const whereClause = wheres.length ? `WHERE ${wheres.join(' AND ')}` : '';
+
+    const { rows: countRows } = await pool.query(
+      `SELECT COUNT(*) FROM products p ${whereClause}`, params,
+    );
+
+    const listParams = [...params];
+    let limitSql = '';
+    if (limitNum) {
+      listParams.push(limitNum, (pageNum - 1) * limitNum);
+      limitSql = `LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`;
+    }
+
     const { rows } = await pool.query(
       `SELECT p.*, c.name AS category_name, c.slug AS category_slug
        FROM products p LEFT JOIN categories c ON p.category_id = c.id
-       ORDER BY p.created_at DESC`,
+       ${whereClause}
+       ORDER BY p.created_at DESC
+       ${limitSql}`,
+      listParams,
     );
+    res.set('X-Total-Count', countRows[0].count);
     res.json(await attachProductExtras(rows));
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch products' });
@@ -111,12 +168,17 @@ router.get('/admin/all', auth, adminOnly, async (_req, res) => {
 });
 
 // GET /api/products/:slug
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Accepts either a slug (public product pages) or a UUID id (cart/order items,
+// which only ever store the product id) — both resolve the same product row.
 router.get('/:slug', async (req, res) => {
   try {
+    const isId = UUID_RE.test(req.params.slug);
     const { rows } = await pool.query(
       `SELECT p.*, c.name AS category_name, c.slug AS category_slug
        FROM products p LEFT JOIN categories c ON p.category_id = c.id
-       WHERE p.slug = $1 AND p.is_active = true`,
+       WHERE ${isId ? 'p.id = $1' : 'p.slug = $1'} AND p.is_active = true`,
       [req.params.slug],
     );
     if (!rows.length) return res.status(404).json({ error: 'Product not found' });

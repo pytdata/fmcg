@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { useCallback, useState } from 'react';
+import { api, getPage } from '@/lib/api';
+import { useInfiniteScroll } from '@/hooks/use-infinite-scroll';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -27,16 +28,20 @@ const statusColors: Record<string, string> = {
   cancelled: 'bg-red-50 text-red-700',
 };
 
+const PAGE_SIZE = 30;
+
 export default function AdminCustomersPage() {
-  const [customers, setCustomers] = useState<Profile[]>([]);
   const [selected, setSelected] = useState<CustomerDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
-  useEffect(() => {
-    api.get<Profile[]>('/api/customers').then(data => {
-      setCustomers(Array.isArray(data) ? data : []);
-    }).catch(console.error);
+  const fetchPage = useCallback(async (page: number) => {
+    const { data, total } = await getPage<Profile[]>(`/api/customers?limit=${PAGE_SIZE}&page=${page}`);
+    return { items: Array.isArray(data) ? data : [], total };
   }, []);
+
+  const { items: customers, loading, initialLoading, sentinelRef } = useInfiniteScroll<Profile>({
+    fetchPage, resetKey: 'all',
+  });
 
   const viewCustomer = async (id: string) => {
     setDetailLoading(true);
@@ -86,7 +91,14 @@ export default function AdminCustomersPage() {
           </Card>
         ))}
       </div>
-      {customers.length === 0 && <p className="text-gray-500 text-sm">No customers yet.</p>}
+      {initialLoading && <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-amber-600" /></div>}
+      {!initialLoading && customers.length === 0 && <p className="text-gray-500 text-sm">No customers yet.</p>}
+      <div ref={sentinelRef} className="h-1" />
+      {loading && !initialLoading && (
+        <div className="flex items-center justify-center gap-2 text-sm text-gray-400 py-4">
+          <Loader2 className="w-4 h-4 animate-spin" /> Loading more…
+        </div>
+      )}
 
       <Dialog open={detailLoading || !!selected} onOpenChange={open => { if (!open) setSelected(null); }}>
         <DialogContent className="max-w-[calc(100%-2rem)] md:max-w-lg max-h-[90vh] overflow-y-auto">

@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import { cachedGet } from '@/lib/api';
+import { cachedGet, getPage } from '@/lib/api';
 import type { Product, Category, Banner, GiftBox, Promotion, SiteSettings, Order, Brand, TeamMember, SeoMeta, GiftPackaging, BlogPost, Testimonial } from '@/types/index';
 
 export async function getTestimonials(): Promise<Testimonial[]> {
@@ -58,6 +58,26 @@ export async function getProducts(options?: {
   if (options?.limit) params.set('limit', String(options.limit));
   try { return await api.get<Product[]>(`/api/products?${params}`); }
   catch { return []; }
+}
+
+// Paginated products fetch — returns the total matching row count alongside
+// the page of results, for numbered pagination / infinite scroll.
+export async function getProductsPage(options?: {
+  categorySlug?: string; featured?: boolean; search?: string; tag?: string;
+  sort?: 'newest' | 'price-low' | 'price-high' | 'name'; limit?: number; page?: number;
+}): Promise<{ products: Product[]; total: number }> {
+  const params = new URLSearchParams();
+  if (options?.categorySlug) params.set('category', options.categorySlug);
+  if (options?.featured) params.set('featured', 'true');
+  if (options?.search) params.set('search', options.search);
+  if (options?.tag) params.set('tag', options.tag);
+  if (options?.sort) params.set('sort', options.sort);
+  if (options?.limit) params.set('limit', String(options.limit));
+  if (options?.page) params.set('page', String(options.page));
+  try {
+    const { data, total } = await getPage<Product[]>(`/api/products?${params}`);
+    return { products: Array.isArray(data) ? data : [], total };
+  } catch { return { products: [], total: 0 }; }
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {

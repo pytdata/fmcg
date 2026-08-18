@@ -156,20 +156,24 @@ export interface Banner {
 }
 
 export interface SiteSettings {
-  id: number;
+  id: string;
   site_name: string;
-  site_description?: string;
+  site_tagline?: string;
   contact_phone: string;
   contact_email?: string;
-  contact_address: string;
+  address: string;
+  logo_url?: string;
+  favicon_url?: string;
   facebook_url?: string;
   instagram_url?: string;
   twitter_url?: string;
   whatsapp_number?: string;
-  delivery_fee: number;
-  free_delivery_threshold: number;
+  free_delivery_min: number;
+  standard_delivery_fee: number;
+  currency?: string;
   meta_title?: string;
   meta_description?: string;
+  paystack_public_key?: string;
 }
 
 export interface CartItem {
@@ -212,6 +216,7 @@ export interface Order {
   tracking_number?: string;
   notes?: string;
   order_type: 'regular' | 'gift_box' | 'custom_gift_box';
+  delivery_mode: 'delivery' | 'pickup';
   gift_box_id?: string | null;
   custom_gift_box_id?: string | null;
   created_at: string;
