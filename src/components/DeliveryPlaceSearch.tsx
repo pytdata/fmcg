@@ -51,8 +51,16 @@ export function DeliveryPlaceSearch({ onChange, disabled = false }: { onChange: 
       if (version.current === requestVersion) setError(err instanceof Error ? err.message : 'Unable to calculate delivery');
     } finally { if (version.current === requestVersion) setBusy(false); }
   }
-  function useCurrentLocation() {
+  async function useCurrentLocation() {
+    if (!window.isSecureContext) { setError('Location access requires the secure HTTPS website.'); return; }
     if (!navigator.geolocation) { setError('Your browser does not support location access.'); return; }
+    try {
+      const permission = await navigator.permissions?.query({ name: 'geolocation' as PermissionName });
+      if (permission?.state === 'denied') {
+        setError('Location access is blocked for this site. Open the lock icon beside the address, allow Location, then click “Use my location” again.');
+        return;
+      }
+    } catch { /* Older browsers may not expose the Permissions API. */ }
     setLocating(true); setError('');
     navigator.geolocation.getCurrentPosition(async position => {
       try {
@@ -60,7 +68,12 @@ export function DeliveryPlaceSearch({ onChange, disabled = false }: { onChange: 
         await choose(place);
       } catch (err) { setError(err instanceof Error ? err.message : 'Unable to identify your current location'); }
       finally { setLocating(false); }
-    }, () => { setLocating(false); setError('Location permission was not granted. Search for your address instead.'); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+    }, error => {
+      setLocating(false);
+      if (error.code === error.PERMISSION_DENIED) setError('Location access was denied. Open the lock icon beside the address, allow Location, then click “Use my location” again.');
+      else if (error.code === error.TIMEOUT) setError('Location lookup timed out. Try again or search for the address manually.');
+      else setError('Unable to identify your current location. Search for the address instead.');
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
   }
   return <div className="space-y-2">
     <label htmlFor="delivery-place" className="flex items-center gap-1 text-sm text-gray-600"><MapPin className="w-4 h-4" /> Search your delivery address</label>
