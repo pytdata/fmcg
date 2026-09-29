@@ -21,7 +21,9 @@ async function google(path, options = {}) {
 }
 async function autocomplete(input, sessionToken) {
   const data = await google('places:autocomplete', {
-    method: 'POST', body: JSON.stringify({ input, sessionToken, languageCode: 'en', regionCode: 'gh' }),
+    // Do not bias results to Ghana: shoppers may enter Canada or any supported
+    // country and should see the international place suggestion immediately.
+    method: 'POST', body: JSON.stringify({ input, sessionToken, languageCode: 'en' }),
   });
   return (data.suggestions || []).filter(s => s.placePrediction).map(({ placePrediction: p }) => ({ placeId: p.placeId, label: p.text.text }));
 }
