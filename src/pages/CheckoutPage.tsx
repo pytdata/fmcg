@@ -527,7 +527,6 @@ export default function CheckoutPage() {
         <div className="w-full lg:w-96 shrink-0">
           <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm sticky top-24">
             <h3 className="font-bold text-gray-900 mb-4">Order Summary</h3>
-            <div className="mb-4"><PaystackTrustBanner compact /></div>
 
             {/* Items — cart, curated gift box, or custom gift box depending on checkout mode */}
             <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
@@ -685,6 +684,9 @@ export default function CheckoutPage() {
             </Button>
 
 
+          </div>
+          <div className="mt-3 flex justify-center">
+            <PaystackTrustBanner compact />
           </div>
         </div>
       </div>
