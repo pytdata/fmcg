@@ -19,6 +19,7 @@ router.put('/', auth, adminOnly, async (req, res) => {
     facebook_url, instagram_url, twitter_url, whatsapp_number, meta_title,
     meta_description, free_delivery_min, standard_delivery_fee, paystack_public_key,
   } = req.body;
+  if (standard_delivery_fee !== undefined && (typeof standard_delivery_fee !== 'number' || !Number.isFinite(standard_delivery_fee) || standard_delivery_fee < 0)) return res.status(400).json({ error: 'Base delivery fee must be a non-negative number' });
   try {
     const { rows } = await pool.query(
       `UPDATE site_settings SET

@@ -123,8 +123,7 @@ export async function getSiteSettings(): Promise<SiteSettings | null> {
 }
 
 export async function createOrder(order: Partial<Order> & { items: unknown[] }): Promise<Order | null> {
-  try { return await api.post<Order>('/api/orders', order); }
-  catch (err) { console.error('createOrder error', err); return null; }
+  return api.post<Order>('/api/orders', order);
 }
 
 export async function getOrders(userId?: string): Promise<Order[]> {

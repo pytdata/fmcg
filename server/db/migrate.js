@@ -38,7 +38,7 @@ const DEFAULT_MODULES = [
 ];
 
 // Bump this whenever new migration steps are added so they run once per DB.
-const SCHEMA_VERSION = '12';
+const SCHEMA_VERSION = '13';
 
 // Default testimonials (seeded once so the section isn't empty).
 const DEFAULT_TESTIMONIALS = [
@@ -640,6 +640,9 @@ async function runMigrations() {
       }
     }
 
+    // Continent prices start unconfigured; existing fees are never overwritten.
+    await require('./deliveryMigration')(client);
+
     // ── Mark this schema version complete so the heavy body is skipped next time.
     await client.query(
       `INSERT INTO app_meta (key, value) VALUES ('schema_version', $1)
@@ -650,6 +653,7 @@ async function runMigrations() {
     console.log('[migrations] All migrations applied successfully.');
   } catch (err) {
     console.error('[migrations] Migration error:', err.message);
+    throw err;
   } finally {
     client.release();
   }

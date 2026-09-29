@@ -2,6 +2,7 @@ const router = require('express').Router();
 const pool = require('../db/pool');
 const { auth, adminOnly, optionalAuth } = require('../middleware/auth');
 const { notifyOrder } = require('../services/notify');
+const { money } = require('../services/delivery');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function orderNumber() {
@@ -30,7 +31,7 @@ router.post('/', optionalAuth, async (req, res) => {
   const {
     items, shipping_name, shipping_phone, shipping_address, shipping_city,
     shipping_region, guest_email, guest_phone, payment_method,
-    subtotal, discount_amount, delivery_fee, total_amount, coupon_code,
+    subtotal, total_amount, coupon_code,
     order_type, gift_box_id, custom_gift_box_id, notes, delivery_mode,
     idempotency_key,
   } = req.body;
@@ -39,7 +40,10 @@ router.post('/', optionalAuth, async (req, res) => {
 
   const mode = delivery_mode === 'pickup' ? 'pickup' : 'delivery';
   // Pickup orders never carry a delivery fee, regardless of what the client sent.
-  const resolvedDeliveryFee = mode === 'pickup' ? 0 : (delivery_fee || 0);
+  let resolvedDeliveryFee = 0;
+  let resolvedDiscount = 0;
+  let resolvedTotal;
+  let deliveryQuote = null;
 
   // A double-submitted / retried checkout (double-click, client timeout-and-retry,
   // browser back-then-resubmit) must not create two orders for the same cart.
@@ -56,6 +60,27 @@ router.post('/', optionalAuth, async (req, res) => {
   try {
     await client.query('BEGIN');
 
+    const sub = Number(subtotal);
+    if (!Number.isFinite(sub) || sub < 0) throw Object.assign(new Error('Invalid order subtotal'), { status: 400 });
+    if (mode === 'delivery') {
+      const quoteId = req.body.delivery_quote_id;
+      if (typeof quoteId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(quoteId)) throw Object.assign(new Error('Select a delivery location to get a quote'), { status: 400 });
+      const { rows: [saved] } = await client.query('SELECT details FROM delivery_quotes WHERE id=$1 AND expires_at > now()', [quoteId]);
+      if (!saved) throw Object.assign(new Error('Delivery quote expired. Please select your location again.'), { status: 409 });
+      deliveryQuote = saved.details;
+      resolvedDeliveryFee = deliveryQuote.feeGhs;
+    }
+    if (coupon_code) {
+      const { rows: [promo] } = await client.query(`SELECT * FROM promotions WHERE LOWER(code)=LOWER($1) AND is_active=true AND (valid_until IS NULL OR valid_until > now()) FOR UPDATE`, [coupon_code]);
+      if (!promo || (promo.max_uses && promo.used_count >= promo.max_uses) || sub < Number(promo.min_order_amount || 0)) throw Object.assign(new Error('Coupon is no longer available. Remove it and retry.'), { status: 409 });
+      if (promo.discount_type === 'free_shipping') resolvedDeliveryFee = 0;
+      if (promo.discount_type === 'fixed') resolvedDiscount = Math.min(sub, Number(promo.discount_value));
+      if (promo.discount_type === 'percentage') resolvedDiscount = Math.min(sub, sub * Number(promo.discount_value) / 100);
+    }
+    resolvedDiscount = money(resolvedDiscount);
+    resolvedTotal = money(Math.max(0, sub + resolvedDeliveryFee - resolvedDiscount));
+    if (!Number.isFinite(Number(total_amount)) || Math.abs(Number(total_amount) - resolvedTotal) > 0.011) throw Object.assign(new Error('Your total changed. Refresh the delivery quote and try again.'), { status: 409 });
+
     const num = orderNumber();
     const { rows: [order] } = await client.query(
       `INSERT INTO orders
@@ -67,13 +92,15 @@ router.post('/', optionalAuth, async (req, res) => {
        VALUES ($1,$2,$3,$4,'pending','pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
        RETURNING *`,
       [num, req.user?.id || null, guest_email || null, guest_phone || null,
-       payment_method || 'paystack', subtotal, discount_amount || 0,
-       resolvedDeliveryFee, total_amount, coupon_code || null,
-       shipping_name, shipping_phone, shipping_address,
-       shipping_city, shipping_region, order_type || 'regular',
+       payment_method || 'paystack', subtotal, resolvedDiscount,
+       resolvedDeliveryFee, resolvedTotal, coupon_code || null,
+       shipping_name, shipping_phone, deliveryQuote?.address || shipping_address,
+       deliveryQuote?.city || shipping_city, deliveryQuote?.region || shipping_region, order_type || 'regular',
        gift_box_id || null, custom_gift_box_id || null, notes || null,
        mode, idempotency_key || null],
     );
+
+    if (deliveryQuote) await client.query('UPDATE orders SET delivery_quote=$1 WHERE id=$2', [deliveryQuote, order.id]);
 
     // Insert order items
     for (const item of items) {
@@ -120,13 +147,14 @@ router.post('/', optionalAuth, async (req, res) => {
       notifyOrder({
         orderId: order.id, orderNumber: num, event: 'order_placed',
         phone, email,
-        data: { amount: total_amount, shipping: { name: shipping_name, address: shipping_address, city: shipping_city } },
+        data: { amount: resolvedTotal, shipping: { name: shipping_name, address: deliveryQuote?.address || shipping_address, city: deliveryQuote?.city || shipping_city } },
       }).catch(console.error);
     }
 
     res.status(201).json(order);
   } catch (err) {
     await client.query('ROLLBACK');
+    if (err.status) return res.status(err.status).json({ error: err.message });
     if (err.code === '23505' && idempotency_key) {
       // Lost a race to a concurrent identical submission — return its order.
       const { rows: [existing] } = await pool.query(

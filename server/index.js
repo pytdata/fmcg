@@ -61,6 +61,8 @@ app.use('/api/products',    require('./routes/products'));
 app.use('/api/products/:productId/media',      require('./routes/productMedia'));
 app.use('/api/products/:productId/variations', require('./routes/variations'));
 app.use('/api/categories',  require('./routes/categories'));
+app.set('trust proxy', 1); // Railway terminates requests at its reverse proxy.
+app.use('/api/delivery', require('./routes/delivery'));
 app.use('/api/delivery-locations', require('./routes/deliveryLocations'));
 app.use('/api/cart',        require('./routes/cart'));
 app.use('/api/orders',      require('./routes/orders'));

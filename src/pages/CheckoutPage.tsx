@@ -7,10 +7,10 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SearchableSelect } from '@/components/ui/searchable-select';
+import { DeliveryPlaceSearch, type DeliveryQuote } from '@/components/DeliveryPlaceSearch';
 import { toast } from 'sonner';
 import { ArrowLeft, Banknote, CreditCard, Gift, Loader2, MapPin, Store, Ticket, Truck, X } from 'lucide-react';
-import type { DeliveryLocation, GiftBox } from '@/types/index';
+import type { GiftBox } from '@/types/index';
 
 // Draft shape written to localStorage by CustomGiftBoxPage.tsx.
 interface CustomGiftBoxDraft {
@@ -90,10 +90,14 @@ export default function CheckoutPage() {
   const [couponError, setCouponError] = useState(false);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
 
-  // Delivery locations fetched from backend
-  const [deliveryLocations, setDeliveryLocations] = useState<DeliveryLocation[]>([]);
-  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
-  const [locationsLoading, setLocationsLoading] = useState(true);
+  const [deliveryQuote, setDeliveryQuote] = useState<DeliveryQuote | null>(null);
+  const [quoteExpired, setQuoteExpired] = useState(false);
+  useEffect(() => {
+    setQuoteExpired(false);
+    if (!deliveryQuote) return;
+    const timer = setTimeout(() => setQuoteExpired(true), Math.max(0, Date.parse(deliveryQuote.expiresAt) - Date.now()));
+    return () => clearTimeout(timer);
+  }, [deliveryQuote]);
 
   // ── Fulfillment: delivery vs in-store pickup ────────────────────────────────
   const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery');
@@ -113,34 +117,13 @@ export default function CheckoutPage() {
     paymentMethod: 'paystack',
   });
 
-  // ── Load delivery locations ────────────────────────────────────────────────
-  useEffect(() => {
-    api.get<DeliveryLocation[]>('/api/delivery-locations')
-      .then(data => {
-        const locs = Array.isArray(data) ? data : [];
-        setDeliveryLocations(locs);
-        // auto-select first active location
-        if (locs.length > 0) {
-          setSelectedLocationId(locs[0].id);
-          setForm(f => ({ ...f, city: locs[0].name, region: locs[0].region ?? '' }));
-        }
-      })
-      .catch(() => setDeliveryLocations([]))
-      .finally(() => setLocationsLoading(false));
-  }, []);
-
-  // ── Delivery fee: location-based, overridden by coupon free shipping or pickup ─
-  const selectedLocation = deliveryLocations.find(l => l.id === selectedLocationId);
-  const baseDeliveryFee = deliveryMode === 'pickup' ? 0 : (selectedLocation ? Number(selectedLocation.delivery_fee) : 0);
-  const deliveryFee = deliveryMode === 'pickup' ? 0 : (freeShipping ? 0 : baseDeliveryFee);
-  const total = Math.max(0, checkoutSubtotal + deliveryFee - discount);
-
-  const handleLocationChange = (locId: string) => {
-    setSelectedLocationId(locId);
-    const loc = deliveryLocations.find(l => l.id === locId);
-    if (loc) {
-      setForm(f => ({ ...f, city: loc.name, region: loc.region ?? '' }));
-    }
+  const deliveryReady = !!deliveryQuote && !quoteExpired;
+  const baseDeliveryFee = deliveryMode === 'pickup' ? 0 : (deliveryQuote?.feeGhs ?? 0);
+  const deliveryFee = deliveryMode === 'pickup' || freeShipping ? 0 : baseDeliveryFee;
+  const total = Math.round(Math.max(0, checkoutSubtotal + deliveryFee - discount) * 100) / 100;
+  const handleQuoteChange = (quote: DeliveryQuote | null) => {
+    setDeliveryQuote(quote);
+    setForm(f => ({ ...f, address: quote?.address || '', city: quote?.city || '', region: quote?.region || '' }));
   };
 
   // ── Coupon ─────────────────────────────────────────────────────────────────
@@ -248,8 +231,9 @@ export default function CheckoutPage() {
       subtotal: checkoutSubtotal,
       discount_amount: discount,
       delivery_fee: deliveryFee,
+      delivery_quote_id: deliveryMode === 'delivery' ? deliveryQuote?.id : undefined,
       total_amount: total,
-      coupon_code: couponCode || null,
+      coupon_code: couponApplied ? couponCode : null,
       shipping_name: form.fullName,
       shipping_phone: form.phone,
       shipping_address: deliveryMode === 'pickup' ? (pickupAddress || 'Pickup — no delivery address') : form.address,
@@ -269,8 +253,8 @@ export default function CheckoutPage() {
       toast.error('Please fill in all required shipping fields.');
       return;
     }
-    if (deliveryMode === 'delivery' && deliveryLocations.length > 0 && !selectedLocationId) {
-      toast.error('Please select a delivery location.');
+    if (deliveryMode === 'delivery' && !deliveryReady) {
+      toast.error('Please select a delivery location with a current quote.');
       return;
     }
     const contactEmail = user?.email || form.email;
@@ -305,7 +289,7 @@ export default function CheckoutPage() {
       const handler = window.PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: contactEmail!,
-        amount: Math.round(total * 100),
+        amount: Math.round(Number(order.total_amount) * 100),
         currency: 'GHS',
         ref,
         metadata: {
@@ -351,7 +335,7 @@ export default function CheckoutPage() {
       handler.openIframe();
     } catch (err) {
       console.error('placeOrder error:', err);
-      toast.error('Something went wrong. Please try again.');
+      toast.error(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setLoading(false);
     }
   };
@@ -424,7 +408,7 @@ export default function CheckoutPage() {
               {deliveryMode === 'delivery' && (
                 <div className="sm:col-span-2">
                   <Label className="text-sm font-normal">Address *</Label>
-                  <Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="House number, street, area" />
+                  <Input value={form.address} readOnly placeholder="Select your address in the Fulfillment card below" />
                 </div>
               )}
             </div>
@@ -443,7 +427,8 @@ export default function CheckoutPage() {
                 <button
                   key={opt.key}
                   type="button"
-                  onClick={() => setDeliveryMode(opt.key)}
+                  disabled={loading}
+                  onClick={() => { if (deliveryMode !== opt.key) { setDeliveryMode(opt.key); handleQuoteChange(null); } }}
                   className={`w-full flex items-start gap-3 p-3 rounded-lg border transition-colors
                     ${deliveryMode === opt.key ? 'border-amber-600 bg-amber-50' : 'border-gray-200 hover:bg-gray-50'}`}
                 >
@@ -468,32 +453,22 @@ export default function CheckoutPage() {
                   <p className="text-xs text-emerald-700 mt-0.5">{pickupAddress || 'We will contact you with pickup details.'}</p>
                 </div>
               </div>
-            ) : locationsLoading ? (
-              <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
-                <Loader2 className="w-4 h-4 animate-spin" /> Loading locations…
-              </div>
-            ) : deliveryLocations.length === 0 ? (
-              <div className="rounded-lg bg-amber-50 border border-amber-100 p-3 text-sm text-amber-800">
-                No delivery locations configured yet. Contact us to arrange delivery.
-              </div>
             ) : (
-              <>
-                <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" /> Select your delivery area — the fee is calculated automatically
-                </p>
-                <SearchableSelect
-                  value={selectedLocationId}
-                  onValueChange={handleLocationChange}
-                  options={deliveryLocations.map(loc => ({
-                    value: loc.id,
-                    label: `${loc.name} — ${Number(loc.delivery_fee) === 0 ? 'Free' : `GHS ${Number(loc.delivery_fee).toFixed(2)}`}`,
-                    keywords: loc.region ? [loc.region] : undefined,
-                  }))}
-                  placeholder="Select your delivery area"
-                  searchPlaceholder="Search locations…"
-                  className="w-full"
-                />
-              </>
+              <div className="space-y-3">
+                <DeliveryPlaceSearch onChange={handleQuoteChange} disabled={loading} />
+                {quoteExpired && <p role="alert" className="text-sm text-amber-700">Your delivery quote expired. Search and select the address again to refresh it.</p>}
+                {deliveryQuote && !quoteExpired && <div className="rounded-lg border bg-gray-50 p-3 text-sm" aria-live="polite">
+                  <p className="font-medium">{deliveryQuote.address}</p>
+                  {deliveryQuote.method === 'osrm'
+                    ? <p className="mt-1">Delivery: GHS {deliveryQuote.feeGhs.toFixed(2)} · {deliveryQuote.distanceKm?.toFixed(2)} km by road</p>
+                    : <>
+                      <p className="mt-1">Delivery: USD {deliveryQuote.feeUsd?.toFixed(2)} = GHS {deliveryQuote.feeGhs.toFixed(2)}</p>
+                      <p className="text-xs text-gray-500 mt-1">1 USD = GHS {deliveryQuote.exchangeRate?.toFixed(4)} · Rate dated {deliveryQuote.rateAsOf ? new Date(deliveryQuote.rateAsOf).toLocaleDateString() : ''}</p>
+                      {deliveryQuote.rateSource === 'ExchangeRate-API' && <a className="text-xs underline text-gray-500" href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">Rates by ExchangeRate-API</a>}
+                    </>}
+                  <p className="text-xs text-gray-500 mt-1">Quote valid for 15 minutes. Payment is collected in Ghana cedis.</p>
+                </div>}
+              </div>
             )}
           </div>
 
@@ -655,13 +630,15 @@ export default function CheckoutPage() {
                 <span className="flex items-center gap-1">
                   {deliveryMode === 'pickup' ? <Store className="w-3.5 h-3.5" /> : <Truck className="w-3.5 h-3.5" />}
                   {deliveryMode === 'pickup' ? 'Pickup' : 'Delivery'}
-                  {deliveryMode === 'delivery' && selectedLocation && (
-                    <span className="text-xs text-gray-400">({selectedLocation.name})</span>
+                  {deliveryMode === 'delivery' && deliveryReady && (
+                    <span className="text-xs text-gray-400">({deliveryQuote?.countryCode})</span>
                   )}
                 </span>
                 <span>
                   {deliveryMode === 'pickup' ? (
                     <span className="text-emerald-600">Free</span>
+                  ) : !deliveryReady ? (
+                    <span className="text-gray-500">Select address</span>
                   ) : deliveryFee === 0 ? (
                     <span className="text-emerald-600 flex items-center gap-1">
                       Free
@@ -670,7 +647,7 @@ export default function CheckoutPage() {
                       )}
                     </span>
                   ) : (
-                    `GHS ${deliveryFee.toFixed(2)}`
+                    deliveryQuote?.method === 'flat' ? `USD ${deliveryQuote.feeUsd?.toFixed(2)} / GHS ${deliveryFee.toFixed(2)}` : `GHS ${deliveryFee.toFixed(2)}`
                   )}
                 </span>
               </div>
@@ -692,7 +669,7 @@ export default function CheckoutPage() {
             <Button
               className="w-full bg-amber-600 hover:bg-amber-700 h-11"
               onClick={placeOrder}
-              disabled={loading || (deliveryMode === 'delivery' && deliveryLocations.length > 0 && !selectedLocationId)}
+              disabled={loading || (deliveryMode === 'delivery' && !deliveryReady)}
             >
               {loading
                 ? 'Processing…'
@@ -701,11 +678,7 @@ export default function CheckoutPage() {
                   : `Place Order — GHS ${total.toFixed(2)}`}
             </Button>
 
-            {deliveryMode === 'delivery' && deliveryLocations.length === 0 && !locationsLoading && (
-              <p className="text-xs text-amber-600 mt-2 text-center flex items-center justify-center gap-1">
-                <MapPin className="w-3 h-3" /> No delivery locations set up yet
-              </p>
-            )}
+
           </div>
         </div>
       </div>
