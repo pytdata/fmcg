@@ -1,242 +1,124 @@
 const router = require('express').Router();
 const pool = require('../db/pool');
+const { randomUUID } = require('node:crypto');
 const { auth, adminOnly, optionalAuth } = require('../middleware/auth');
 const { notifyOrder } = require('../services/notify');
 const { money } = require('../services/delivery');
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function orderNumber() {
-  return 'KW-' + Date.now().toString(36).toUpperCase();
-}
+const { priceOrder, couponDiscount, UUID, invalid } = require('../services/orderPricing');
+const { fingerprint, canAccess, checkoutResponse } = require('../services/orderAccess');
+const rateLimit = require('../middleware/rateLimit');
 
 async function verifyPaystack(reference) {
-  const key = process.env.PAYSTACK_SECRET_KEY;
-  if (!key) return null;
-  try {
-    const res = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
-    const body = await res.json();
-    return body.data || null;
-  } catch (err) {
-    console.error('[paystack verify]', err.message);
-    return null;
-  }
+  if (!process.env.PAYSTACK_SECRET_KEY) throw invalid('Payment verification is unavailable', 503);
+  const response = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+    headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` }, signal: AbortSignal.timeout(10000),
+  });
+  const body = await response.json();
+  if (!response.ok || !body.status) throw invalid('Payment provider is temporarily unavailable', 502);
+  return body.data;
 }
 
-// ── Public / customer routes ──────────────────────────────────────────────────
-
-// POST /api/orders  — place a new order
-router.post('/', optionalAuth, async (req, res) => {
-  const {
-    items, shipping_name, shipping_phone, shipping_address, shipping_city,
-    shipping_region, guest_email, guest_phone, payment_method,
-    subtotal, total_amount, coupon_code,
-    order_type, gift_box_id, custom_gift_box_id, notes, delivery_mode,
-    idempotency_key,
-  } = req.body;
-
-  if (!items?.length) return res.status(400).json({ error: 'Order must have at least one item' });
-
-  const mode = delivery_mode === 'pickup' ? 'pickup' : 'delivery';
-  // Pickup orders never carry a delivery fee, regardless of what the client sent.
-  let resolvedDeliveryFee = 0;
-  let resolvedDiscount = 0;
-  let resolvedTotal;
-  let deliveryQuote = null;
-
-  // A double-submitted / retried checkout (double-click, client timeout-and-retry,
-  // browser back-then-resubmit) must not create two orders for the same cart.
-  // The frontend sends one idempotency_key per checkout attempt; if an order
-  // already exists for it, return that order instead of creating another.
-  if (idempotency_key) {
-    const { rows: [existing] } = await pool.query(
-      'SELECT * FROM orders WHERE idempotency_key = $1', [idempotency_key],
-    );
-    if (existing) return res.status(200).json(existing);
-  }
-
-  const client = await pool.connect();
+router.post('/', optionalAuth, rateLimit('orders', 10, 600), async (req, res) => {
+  const body = req.body;
+  const { shipping_name, shipping_phone, guest_email, payment_method = 'paystack', idempotency_key, coupon_code, notes } = body;
+  if (!UUID.test(idempotency_key || '')) return res.status(400).json({ error: 'A valid checkout idempotency key is required' });
+  if (!['delivery','pickup'].includes(body.delivery_mode) || !['paystack','cod'].includes(payment_method)) return res.status(400).json({ error: 'Invalid delivery or payment method' });
+  if (typeof shipping_name !== 'string' || !shipping_name.trim() || shipping_name.length > 150 || typeof shipping_phone !== 'string' || !/^[+\d() .-]{7,30}$/.test(shipping_phone)) return res.status(400).json({ error: 'Enter a valid name and phone number' });
+  const email = req.user?.email || guest_email;
+  if ((payment_method === 'paystack' || email) && (typeof email !== 'string' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) return res.status(400).json({ error: 'A valid email is required' });
+  if ((coupon_code != null && (typeof coupon_code !== 'string' || coupon_code.length > 80)) || (notes != null && (typeof notes !== 'string' || notes.length > 2000))) return res.status(400).json({ error: 'Invalid coupon or notes' });
+  const hash = fingerprint(body, req.user?.id);
+  let client;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
-
-    const sub = Number(subtotal);
-    if (!Number.isFinite(sub) || sub < 0) throw Object.assign(new Error('Invalid order subtotal'), { status: 400 });
-    if (mode === 'delivery') {
-      const quoteId = req.body.delivery_quote_id;
-      if (typeof quoteId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(quoteId)) throw Object.assign(new Error('Select a delivery location to get a quote'), { status: 400 });
-      const { rows: [saved] } = await client.query('SELECT details FROM delivery_quotes WHERE id=$1 AND expires_at > now()', [quoteId]);
-      if (!saved) throw Object.assign(new Error('Delivery quote expired. Please select your location again.'), { status: 409 });
+    await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [idempotency_key]);
+    const { rows: [existing] } = await client.query('SELECT * FROM orders WHERE idempotency_key=$1', [idempotency_key]);
+    if (existing) {
+      if (existing.request_hash !== hash) throw invalid('This checkout was already submitted with different details. Start a new checkout.', 409);
+      await client.query('COMMIT');
+      return res.json(checkoutResponse(existing));
+    }
+    const priced = await priceOrder(client, body);
+    if (typeof body.subtotal !== 'number' || money(body.subtotal) !== priced.subtotal) throw invalid('Product prices changed. Refresh your cart before checking out.', 409);
+    let deliveryQuote = null;
+    let fee = 0;
+    if (body.delivery_mode === 'delivery') {
+      if (!UUID.test(body.delivery_quote_id || '')) throw invalid('Select a delivery location to get a quote');
+      const { rows: [saved] } = await client.query('SELECT details FROM delivery_quotes WHERE id=$1 AND expires_at > now()', [body.delivery_quote_id]);
+      if (!saved) throw invalid('Delivery quote expired. Please select your location again.', 409);
       deliveryQuote = saved.details;
-      resolvedDeliveryFee = deliveryQuote.feeGhs;
-    }
-    if (coupon_code) {
-      const { rows: [promo] } = await client.query(`SELECT * FROM promotions WHERE LOWER(code)=LOWER($1) AND is_active=true AND (valid_until IS NULL OR valid_until > now()) FOR UPDATE`, [coupon_code]);
-      if (!promo || (promo.max_uses && promo.used_count >= promo.max_uses) || sub < Number(promo.min_order_amount || 0)) throw Object.assign(new Error('Coupon is no longer available. Remove it and retry.'), { status: 409 });
-      if (promo.discount_type === 'free_shipping') resolvedDeliveryFee = 0;
-      if (promo.discount_type === 'fixed') resolvedDiscount = Math.min(sub, Number(promo.discount_value));
-      if (promo.discount_type === 'percentage') resolvedDiscount = Math.min(sub, sub * Number(promo.discount_value) / 100);
-    }
-    resolvedDiscount = money(resolvedDiscount);
-    resolvedTotal = money(Math.max(0, sub + resolvedDeliveryFee - resolvedDiscount));
-    if (!Number.isFinite(Number(total_amount)) || Math.abs(Number(total_amount) - resolvedTotal) > 0.011) throw Object.assign(new Error('Your total changed. Refresh the delivery quote and try again.'), { status: 409 });
-
-    const num = orderNumber();
-    const { rows: [order] } = await client.query(
-      `INSERT INTO orders
-         (order_number, user_id, guest_email, guest_phone, status, payment_status,
-          payment_method, subtotal, discount_amount, delivery_fee, total_amount,
-          coupon_code, shipping_name, shipping_phone, shipping_address,
-          shipping_city, shipping_region, order_type, gift_box_id, custom_gift_box_id, notes,
-          delivery_mode, idempotency_key)
-       VALUES ($1,$2,$3,$4,'pending','pending',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
-       RETURNING *`,
-      [num, req.user?.id || null, guest_email || null, guest_phone || null,
-       payment_method || 'paystack', subtotal, resolvedDiscount,
-       resolvedDeliveryFee, resolvedTotal, coupon_code || null,
-       shipping_name, shipping_phone, deliveryQuote?.address || shipping_address,
-       deliveryQuote?.city || shipping_city, deliveryQuote?.region || shipping_region, order_type || 'regular',
-       gift_box_id || null, custom_gift_box_id || null, notes || null,
-       mode, idempotency_key || null],
-    );
-
-    if (deliveryQuote) await client.query('UPDATE orders SET delivery_quote=$1 WHERE id=$2', [deliveryQuote, order.id]);
-
-    // Insert order items
-    for (const item of items) {
-      // Atomic check-and-decrement: the WHERE clause makes the stock check and
-      // the decrement one indivisible operation, so two concurrent orders for
-      // the last unit of a product can't both succeed (the old GREATEST(0, ...)
-      // version let stock go negative-in-spirit by silently clamping to zero
-      // while still letting every order through — an oversell bug).
-      if (item.product_id) {
-        const { rows: [stockRow] } = await client.query(
-          `UPDATE products SET stock_quantity = stock_quantity - $1
-           WHERE id = $2 AND stock_quantity >= $1
-           RETURNING stock_quantity`,
-          [item.quantity, item.product_id],
-        );
-        if (!stockRow) {
-          const err = new Error(`Insufficient stock for "${item.name}"`);
-          err.code = 'INSUFFICIENT_STOCK';
-          throw err;
-        }
+      fee = deliveryQuote.feeGhs;
+      if (!Number.isFinite(fee) || fee < 0) throw invalid('Invalid delivery quote', 409);
+      if (deliveryQuote.countryCode !== 'GH') {
+        const { rows: [group] } = await client.query(`SELECT g.is_active FROM delivery_groups g JOIN delivery_countries c ON c.continent_code=g.code WHERE c.code=$1 FOR SHARE OF g`, [deliveryQuote.countryCode]);
+        if (!group?.is_active) throw invalid('Delivery to this destination has been disabled', 409);
       }
-      await client.query(
-        `INSERT INTO order_items (order_id, product_id, name, quantity, unit_price, total_price, image_url)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [order.id, item.product_id || null, item.name, item.quantity,
-         item.unit_price, item.total_price, item.image_url || null],
-      );
     }
-
-    // Increment coupon usage
+    let discount = 0;
+    let promo = null;
     if (coupon_code) {
-      await client.query(
-        'UPDATE promotions SET used_count = used_count + 1 WHERE code = $1',
-        [coupon_code],
-      );
+      const { rows: promos } = await client.query('SELECT * FROM promotions WHERE LOWER(code)=LOWER($1) FOR UPDATE', [coupon_code]);
+      promo = promos[0];
+      const applied = couponDiscount(promo, priced.subtotal, priced.type);
+      discount = applied.discount;
+      if (applied.freeShipping) fee = 0;
     }
-
+    const total = money(priced.subtotal + fee - discount);
+    if (!Number.isFinite(total) || total > 99999999 || typeof body.total_amount !== 'number' || money(body.total_amount) !== total) throw invalid('Your total changed. Refresh checkout and try again.', 409);
+    if (payment_method === 'paystack' && total <= 0) throw invalid('Choose Cash on Delivery for a zero-total order');
+    const reference = payment_method === 'paystack' ? `KW-${randomUUID()}` : null;
+    const number = `KW-${randomUUID().replace(/-/g,'').toUpperCase()}`;
+    const { rows: [order] } = await client.query(`INSERT INTO orders
+      (order_number,user_id,guest_email,guest_phone,payment_method,subtotal,discount_amount,delivery_fee,total_amount,coupon_code,
+       shipping_name,shipping_phone,shipping_address,shipping_city,shipping_region,order_type,gift_box_id,notes,delivery_mode,
+       idempotency_key,request_hash,payment_reference,delivery_quote)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) RETURNING *`,
+      [number,req.user?.id || null,email || null,shipping_phone,payment_method,priced.subtotal,discount,fee,total,promo?.code || null,
+       shipping_name.trim(),shipping_phone,deliveryQuote?.address || 'In-store pickup',deliveryQuote?.city || '',deliveryQuote?.region || '',priced.type,priced.giftBoxId,notes || null,body.delivery_mode,
+       idempotency_key,hash,reference,deliveryQuote]);
+    for (const item of priced.items) {
+      if (item.product_id) {
+        const { rows } = await client.query('UPDATE products SET stock_quantity=stock_quantity-$1 WHERE id=$2 AND stock_quantity >= $1 RETURNING id', [item.quantity,item.product_id]);
+        if (!rows.length) throw invalid(`Insufficient stock for "${item.name}"`, 409);
+      }
+      await client.query(`INSERT INTO order_items (order_id,product_id,name,quantity,unit_price,total_price,image_url) VALUES ($1,$2,$3,$4,$5,$6,$7)`, [order.id,item.product_id,item.name,item.quantity,item.unit_price,item.total_price,item.image_url]);
+    }
+    if (promo) await client.query('UPDATE promotions SET used_count=used_count+1 WHERE id=$1', [promo.id]);
     await client.query('COMMIT');
-
-    // Send COD notifications async (non-blocking)
-    if (payment_method === 'cod') {
-      const email = req.user?.email || guest_email;
-      const phone = shipping_phone || guest_phone;
-      notifyOrder({
-        orderId: order.id, orderNumber: num, event: 'order_placed',
-        phone, email,
-        data: { amount: resolvedTotal, shipping: { name: shipping_name, address: deliveryQuote?.address || shipping_address, city: deliveryQuote?.city || shipping_city } },
-      }).catch(console.error);
-    }
-
-    res.status(201).json(order);
+    if (payment_method === 'cod') notifyOrder({ orderId:order.id,orderNumber:number,event:'order_placed',phone:shipping_phone,email,data:{amount:total,shipping:{name:shipping_name,address:deliveryQuote?.address || 'In-store pickup'}} }).catch(console.error);
+    res.status(201).json(checkoutResponse(order));
   } catch (err) {
-    await client.query('ROLLBACK');
-    if (err.status) return res.status(err.status).json({ error: err.message });
-    if (err.code === '23505' && idempotency_key) {
-      // Lost a race to a concurrent identical submission — return its order.
-      const { rows: [existing] } = await pool.query(
-        'SELECT * FROM orders WHERE idempotency_key = $1', [idempotency_key],
-      );
-      if (existing) return res.status(200).json(existing);
-    }
-    if (err.code === 'INSUFFICIENT_STOCK') {
-      return res.status(409).json({ error: err.message });
-    }
-    console.error('[orders/create]', err);
-    res.status(500).json({ error: 'Failed to place order' });
-  } finally {
-    client.release();
-  }
+    if (client) await client.query('ROLLBACK').catch(() => {});
+    if (!err.status) console.error('[orders/create]', err.message);
+    res.status(err.status || 500).json({ error: err.status ? err.message : 'Failed to place order' });
+  } finally { client?.release(); }
 });
 
-// POST /api/orders/verify-payment  — verify PayStack transaction
-router.post('/verify-payment', optionalAuth, async (req, res) => {
+router.post('/verify-payment', optionalAuth, rateLimit('verify-payment', 30), async (req, res) => {
   const { reference, orderId } = req.body;
-  if (!reference) return res.status(400).json({ error: 'reference is required' });
-
+  if (!UUID.test(orderId || '') || typeof reference !== 'string' || !/^[A-Za-z0-9.-]{1,100}$/.test(reference)) return res.status(400).json({ error:'Invalid payment reference or order' });
   try {
-    // Optimistic lock — only update if still pending
-    const { rows: [order] } = await pool.query(
-      `SELECT * FROM orders WHERE id = $1 AND status = 'pending'`,
-      [orderId],
-    );
-    if (!order) {
-      // May already be verified
-      const { rows: [existing] } = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
-      if (existing?.payment_status === 'paid') return res.json({ verified: true, order: existing });
-      return res.status(404).json({ error: 'Order not found or already processed' });
-    }
-
+    const { rows: [order] } = await pool.query('SELECT * FROM orders WHERE id=$1', [orderId]);
+    if (!order || !canAccess(req,order)) return res.status(404).json({ error:'Order not found' });
+    if (order.payment_method !== 'paystack' || order.payment_reference !== reference) return res.status(400).json({ error:'Payment reference does not belong to this order' });
+    if (order.payment_status === 'paid') return res.json({ verified:true,order:{order_number:order.order_number} });
+    if (order.status !== 'pending') return res.status(409).json({ error:'Order is no longer awaiting payment' });
     const txn = await verifyPaystack(reference);
-    if (!txn || txn.status !== 'success') {
-      return res.json({ verified: false, status: txn?.status || 'unknown' });
+    if (txn?.status !== 'success') return res.json({ verified:false,status:txn?.status || 'unknown' });
+    let metadata = txn.metadata;
+    if (typeof metadata === 'string') { try { metadata = JSON.parse(metadata); } catch { metadata = null; } }
+    if (txn.reference !== reference || txn.amount !== Math.round(Number(order.total_amount)*100) || txn.currency !== 'GHS' || metadata?.order_id !== order.id) return res.status(400).json({ error:'Payment does not match this order',verified:false });
+    const { rows: [updated] } = await pool.query(`UPDATE orders SET payment_status='paid',status='processing',paystack_trx_ref=$1,updated_at=now() WHERE id=$2 AND status='pending' AND payment_status='pending' RETURNING *`, [reference,orderId]);
+    if (!updated) {
+      const { rows: [current] } = await pool.query('SELECT payment_status,paystack_trx_ref FROM orders WHERE id=$1', [orderId]);
+      return res.status(current?.payment_status === 'paid' && current.paystack_trx_ref === reference ? 200 : 409).json({ verified:current?.payment_status === 'paid' && current.paystack_trx_ref === reference });
     }
-
-    // A "success" status alone isn't enough — reference is client-supplied, so
-    // without checking amount/currency a paid reference for any amount (even one
-    // from an unrelated transaction) could be replayed to mark this order paid.
-    const expectedAmount = Math.round(Number(order.total_amount) * 100);
-    if (txn.amount !== expectedAmount || txn.currency !== 'GHS') {
-      console.error('[orders/verify] amount/currency mismatch', {
-        orderId, reference, expected: expectedAmount, got: txn.amount, currency: txn.currency,
-      });
-      return res.status(400).json({ verified: false, error: 'Payment amount does not match order total' });
-    }
-
-    let updated;
-    try {
-      ({ rows: [updated] } = await pool.query(
-        `UPDATE orders SET payment_status='paid', status='processing',
-           paystack_trx_ref=$1, updated_at=now()
-         WHERE id=$2 AND status='pending' RETURNING *`,
-        [reference, orderId],
-      ));
-    } catch (updateErr) {
-      if (updateErr.code === '23505') { // unique violation on paystack_trx_ref
-        console.error('[orders/verify] reference already used on another order', { orderId, reference });
-        return res.status(409).json({ verified: false, error: 'This payment reference has already been used' });
-      }
-      throw updateErr;
-    }
-
-    if (!updated) return res.json({ verified: true, alreadyProcessed: true });
-
-    // Notify async
-    const phone = updated.shipping_phone || updated.guest_phone;
-    const email = updated.guest_email;
-    notifyOrder({
-      orderId: updated.id, orderNumber: updated.order_number, event: 'payment_confirmed',
-      phone, email,
-      data: { amount: updated.total_amount, shipping: { name: updated.shipping_name } },
-    }).catch(console.error);
-
-    res.json({ verified: true, order: updated });
+    notifyOrder({orderId:updated.id,orderNumber:updated.order_number,event:'payment_confirmed',phone:updated.shipping_phone,email:updated.guest_email,data:{amount:updated.total_amount,shipping:{name:updated.shipping_name}}}).catch(console.error);
+    res.json({verified:true,order:{order_number:updated.order_number}});
   } catch (err) {
-    console.error('[orders/verify]', err);
-    res.status(500).json({ error: 'Payment verification failed' });
+    console.error('[orders/verify]',err.message);
+    res.status(err.status || (err.code === '23505' ? 409 : 502)).json({error:'Payment could not be verified. Please retry.'});
   }
 });
 
@@ -259,13 +141,11 @@ router.get('/mine', auth, async (req, res) => {
 });
 
 // GET /api/orders/track/:orderNumber  — public order tracking
-router.get('/track/:orderNumber', async (req, res) => {
+router.get('/track/:orderNumber', rateLimit('order-tracking', 30), async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT o.order_number, o.status, o.payment_status, o.shipping_name,
-              o.shipping_address, o.shipping_city, o.shipping_region,
-              o.tracking_number, o.total_amount, o.created_at,
-              json_agg(oi.name ORDER BY oi.created_at) AS item_names
+      `SELECT o.order_number, o.status, o.payment_status, o.payment_method,
+              o.total_amount, o.created_at
        FROM orders o
        LEFT JOIN order_items oi ON oi.order_id = o.id
        WHERE o.order_number = $1

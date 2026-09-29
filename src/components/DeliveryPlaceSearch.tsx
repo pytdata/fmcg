@@ -16,6 +16,7 @@ export function DeliveryPlaceSearch({ onChange, disabled = false }: { onChange: 
   const [error, setError] = useState('');
   const [selected, setSelected] = useState(false);
   const [active, setActive] = useState(-1);
+  const [locating, setLocating] = useState(false);
   const token = useRef(crypto.randomUUID());
   const version = useRef(0);
   const onChangeRef = useRef(onChange);
@@ -50,9 +51,20 @@ export function DeliveryPlaceSearch({ onChange, disabled = false }: { onChange: 
       if (version.current === requestVersion) setError(err instanceof Error ? err.message : 'Unable to calculate delivery');
     } finally { if (version.current === requestVersion) setBusy(false); }
   }
+  function useCurrentLocation() {
+    if (!navigator.geolocation) { setError('Your browser does not support location access.'); return; }
+    setLocating(true); setError('');
+    navigator.geolocation.getCurrentPosition(async position => {
+      try {
+        const place = await api.post<Suggestion>('/api/delivery/reverse', { latitude: position.coords.latitude, longitude: position.coords.longitude });
+        await choose(place);
+      } catch (err) { setError(err instanceof Error ? err.message : 'Unable to identify your current location'); }
+      finally { setLocating(false); }
+    }, () => { setLocating(false); setError('Location permission was not granted. Search for your address instead.'); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+  }
   return <div className="space-y-2">
     <label htmlFor="delivery-place" className="flex items-center gap-1 text-sm text-gray-600"><MapPin className="w-4 h-4" /> Search your delivery address</label>
-    <Input id="delivery-place" role="combobox" aria-expanded={suggestions.length > 0} aria-controls="delivery-suggestions"
+    <div className="flex gap-2"><Input id="delivery-place" role="combobox" aria-expanded={suggestions.length > 0} aria-controls="delivery-suggestions"
       aria-autocomplete="list" aria-activedescendant={active >= 0 ? `delivery-option-${active}` : undefined}
       autoComplete="off" value={input} disabled={disabled} placeholder="Type a street address or landmark, anywhere in the world"
       onChange={e => {
@@ -62,7 +74,7 @@ export function DeliveryPlaceSearch({ onChange, disabled = false }: { onChange: 
         if (e.key === 'ArrowUp') { e.preventDefault(); setActive(i => Math.max(i - 1, 0)); }
         if (e.key === 'Escape') { version.current++; setSuggestions([]); setBusy(false); setActive(-1); }
         if (e.key === 'Enter' && suggestions[active]) { e.preventDefault(); void choose(suggestions[active]); }
-      }} />
+      }} /><button type="button" onClick={useCurrentLocation} disabled={disabled || locating} className="shrink-0 rounded-md border px-3 text-xs hover:bg-gray-50" title="Use my current location">{locating ? 'Locating…' : 'Use my location'}</button></div>
     {suggestions.length > 0 && <ul id="delivery-suggestions" role="listbox" className="border rounded-lg bg-white shadow-sm overflow-hidden">
       {suggestions.map((item, i) => <li key={item.placeId} id={`delivery-option-${i}`} role="option" aria-selected={i === active}>
         <button type="button" disabled={disabled} onClick={() => void choose(item)} className={`w-full text-left p-3 text-sm hover:bg-amber-50 ${i === active ? 'bg-amber-50' : ''}`}>{item.label}</button>

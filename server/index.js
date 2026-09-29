@@ -4,12 +4,13 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
-const { runMigrations, ensureMigrated } = require('./db/migrate');
+const { ensureMigrated } = require('./db/migrate');
 
 // Kick migrations off at module load (warm path)…
-runMigrations().catch(err => console.error('[startup] Migration failed:', err.message));
+ensureMigrated().catch(err => console.error('[startup] Migration failed:', err.message));
 
 const app = express();
+app.disable('x-powered-by');
 
 // ── Security headers (XSS / clickjacking / sniffing hardening) ─────────────────
 app.use((req, res, next) => {
@@ -33,8 +34,8 @@ app.use(cors({
   // explicitly exposed — needed for paginated list endpoints' X-Total-Count.
   exposedHeaders: ['X-Total-Count'],
 }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '512kb' }));
+app.use(express.urlencoded({ extended: false, limit: '64kb', parameterLimit: 100 }));
 app.use(morgan('dev'));
 
 // Serve uploaded media — use /tmp/uploads on serverless (Vercel), local uploads/ otherwise
@@ -62,6 +63,7 @@ app.use('/api/products/:productId/media',      require('./routes/productMedia'))
 app.use('/api/products/:productId/variations', require('./routes/variations'));
 app.use('/api/categories',  require('./routes/categories'));
 app.set('trust proxy', 1); // Railway terminates requests at its reverse proxy.
+app.use('/api', require('./middleware/rateLimit')('api', 300));
 app.use('/api/delivery', require('./routes/delivery'));
 app.use('/api/delivery-locations', require('./routes/deliveryLocations'));
 app.use('/api/cart',        require('./routes/cart'));
@@ -94,7 +96,7 @@ app.use((err, _req, res, _next) => {
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ error: 'File too large (max 5 MB)' });
   }
-  res.status(500).json({ error: err.message || 'Internal server error' });
+  res.status(err.type === 'entity.too.large' ? 413 : err.type === 'entity.parse.failed' ? 400 : 500).json({ error: err.type === 'entity.too.large' ? 'Request too large' : err.type === 'entity.parse.failed' ? 'Invalid JSON' : 'Internal server error' });
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────

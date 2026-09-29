@@ -219,6 +219,8 @@ export interface Order {
   delivery_mode: 'delivery' | 'pickup';
   idempotency_key?: string | null;
   delivery_quote_id?: string;
+  packaging_id?: string;
+  order_access_token?: string;
   gift_box_id?: string | null;
   custom_gift_box_id?: string | null;
   created_at: string;

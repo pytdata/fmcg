@@ -1,34 +1,27 @@
 const jwt = require('jsonwebtoken');
-
-function auth(req, res, next) {
-  const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
+const pool = require('../db/pool');
+const { UUID } = require('../services/orderPricing');
+async function resolveUser(header) {
+  if (typeof header !== 'string' || !header.startsWith('Bearer ')) return null;
+  const decoded = jwt.verify(header.slice(7), process.env.JWT_SECRET, { algorithms: ['HS256'] });
+  if (decoded.purpose || typeof decoded.id !== 'string' || !UUID.test(decoded.id)) return null;
+  // Deleted users and revoked admin roles take effect immediately, not after JWT expiry.
+  const { rows: [user] } = await pool.query('SELECT id,email,role FROM profiles WHERE id=$1', [decoded.id]);
+  return user || null;
+}
+async function auth(req, res, next) {
   try {
-    const decoded = jwt.verify(header.slice(7), process.env.JWT_SECRET);
-    req.user = decoded;
+    req.user = await resolveUser(req.headers.authorization);
+    if (!req.user) return res.status(401).json({ error: 'Invalid or expired session' });
     next();
-  } catch {
-    return res.status(401).json({ error: 'Invalid or expired token' });
-  }
+  } catch { res.status(401).json({ error: 'Invalid or expired session' }); }
 }
-
 function adminOnly(req, res, next) {
-  if (req.user?.role !== 'admin') {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
+  if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
   next();
 }
-
-function optionalAuth(req, res, next) {
-  const header = req.headers.authorization;
-  if (header && header.startsWith('Bearer ')) {
-    try {
-      req.user = jwt.verify(header.slice(7), process.env.JWT_SECRET);
-    } catch { /* ignore */ }
-  }
-  next();
+async function optionalAuth(req, res, next) {
+  if (!req.headers.authorization) return next();
+  return auth(req, res, next);
 }
-
 module.exports = { auth, adminOnly, optionalAuth };

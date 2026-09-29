@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { validateCoupon, createOrder, getSiteSettings } from '@/services/store';
-import { api } from '@/lib/api';
+import { api, apiRequest } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,9 @@ import { DeliveryPlaceSearch, type DeliveryQuote } from '@/components/DeliveryPl
 import { toast } from 'sonner';
 import { ArrowLeft, Banknote, CreditCard, Gift, Loader2, MapPin, Store, Ticket, Truck, X } from 'lucide-react';
 import type { GiftBox } from '@/types/index';
+import PaystackTrustBanner from '@/components/common/PaystackTrustBanner';
+
+type OrderWithAccessToken = { id: string; order_number: string; total_amount: number; order_access_token: string };
 
 // Draft shape written to localStorage by CustomGiftBoxPage.tsx.
 interface CustomGiftBoxDraft {
@@ -243,6 +246,7 @@ export default function CheckoutPage() {
       delivery_mode: deliveryMode,
       gift_box_id: giftBoxId,
       custom_gift_box_id: customGiftBoxId,
+      packaging_id: giftBoxParam === 'custom' ? (customBox?.packaging_id || undefined) : undefined,
       notes: giftBoxParam === 'custom' ? (customBox?.personal_message || null) : null,
       idempotency_key: idempotencyKeyRef.current,
     };
@@ -312,9 +316,9 @@ export default function CheckoutPage() {
           void (async () => {
             toast.info('Verifying payment…');
             try {
-              const result = await api.post<{ verified: boolean; order?: { order_number: string } }>(
+              const result = await apiRequest<{ verified: boolean; order?: { order_number: string } }>(
                 '/api/orders/verify-payment',
-                { reference: response.reference, orderId: order.id },
+                { method: 'POST', body: { reference: response.reference, orderId: order.id }, headers: { 'X-Order-Token': (order as OrderWithAccessToken).order_access_token } },
               );
               await clearPurchasedState();
               if (result.verified) {
@@ -375,6 +379,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="mb-6"><PaystackTrustBanner compact /></div>
       <Link
         to={giftBoxParam === 'curated' ? '/gift-boxes' : giftBoxParam === 'custom' ? '/gift-boxes/custom' : '/cart'}
         className="text-sm text-gray-500 hover:text-amber-600 flex items-center gap-1 mb-4"

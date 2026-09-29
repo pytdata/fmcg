@@ -25,6 +25,16 @@ async function autocomplete(input, sessionToken) {
   });
   return (data.suggestions || []).filter(s => s.placePrediction).map(({ placePrediction: p }) => ({ placeId: p.placeId, label: p.text.text }));
 }
+async function reverseGeocode(latitude, longitude) {
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) throw new Error('Invalid location coordinates');
+  const key = process.env.GOOGLE_MAPS_API_KEY;
+  if (!key) throw new Error('Location search is not configured yet');
+  const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${encodeURIComponent(key)}`, { signal: AbortSignal.timeout(8000) });
+  const data = await response.json();
+  const result = data.results?.[0];
+  if (!response.ok || data.status !== 'OK' || !result?.place_id) throw new Error('Could not identify your current location');
+  return { placeId: result.place_id, label: result.formatted_address };
+}
 let rateCache;
 async function exchangeRate() {
   if (process.env.USD_GHS_RATE?.trim()) return { rate: configNumber('USD_GHS_RATE', 0.000001), source: 'configured', asOf: new Date().toISOString() };
@@ -79,4 +89,4 @@ async function quote(placeId, sessionToken) {
   await pool.query('INSERT INTO delivery_quotes (id, details, expires_at) VALUES ($1,$2,$3)', [id, result, expiresAt]);
   return { ...result, id, expiresAt };
 }
-module.exports = { autocomplete, quote, exchangeRate, ghanaFee, money };
+module.exports = { autocomplete, reverseGeocode, quote, exchangeRate, ghanaFee, money };

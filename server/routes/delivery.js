@@ -3,25 +3,19 @@ const pool = require('../db/pool');
 const { auth, adminOnly } = require('../middleware/auth');
 const service = require('../services/delivery');
 
-// Bound paid Places requests per client. Map is periodically pruned and capped.
-const requests = new Map();
-router.use((req, res, next) => {
-  if (!['/places', '/quote'].includes(req.path)) return next();
-  const now = Date.now();
-  for (const [key, value] of requests) if (value.until <= now) requests.delete(key);
-  const key = req.ip;
-  const bucket = requests.get(key) || { count: 0, until: now + 60000 };
-  if (bucket.count >= 60 || (!requests.has(key) && requests.size >= 10000)) return res.status(429).json({ error: 'Too many location requests. Please wait a minute.' });
-  bucket.count++;
-  requests.set(key, bucket);
-  next();
-});
+const rateLimit = require('../middleware/rateLimit');
+router.use(['/places','/quote','/reverse'], rateLimit('places-client',60), rateLimit('places-budget',3000,3600,()=> 'global'));
 function sessionValid(value) { return typeof value === 'string' && /^[a-zA-Z0-9_-]{16,36}$/.test(value); }
 router.post('/places', async (req, res) => {
   const { input, sessionToken } = req.body;
   if (typeof input !== 'string' || input.trim().length < 3 || input.length > 200 || !sessionValid(sessionToken)) return res.status(400).json({ error: 'Enter at least three characters' });
   try { res.json(await service.autocomplete(input.trim(), sessionToken)); }
   catch (err) { res.status(503).json({ error: err.message }); }
+});
+router.post('/reverse', async (req, res) => {
+  const { latitude, longitude } = req.body;
+  try { res.json(await service.reverseGeocode(Number(latitude), Number(longitude))); }
+  catch (err) { res.status(422).json({ error: err.message }); }
 });
 router.post('/quote', async (req, res) => {
   const { placeId, sessionToken } = req.body;
