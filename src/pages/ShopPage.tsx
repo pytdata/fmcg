@@ -10,7 +10,6 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Search, SlidersHorizontal, Tag, Package, ChevronDown, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { Category, Product } from '@/types/index';
-import PaystackTrustBanner from '@/components/common/PaystackTrustBanner';
 
 const PAGE_SIZE = 24;
 
@@ -252,7 +251,6 @@ export default function ShopPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PaystackTrustBanner compact />
       <div className="flex flex-col md:flex-row gap-6">
 
         {/* ── Sidebar ──────────────────────────────────────────────────────── */}

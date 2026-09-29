@@ -3,6 +3,7 @@ import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
+import { IMAGE_PLACEHOLDER, resolveImageUrl } from '@/lib/media';
 
 export default function CartPage() {
   const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
@@ -26,7 +27,7 @@ export default function CartPage() {
           {cartItems.map(item => (
             <div key={item.id} className="flex gap-4 bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
               <Link to={`/product/${item.product?.slug}`} className="w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden bg-gray-50 shrink-0">
-                <img src={item.product?.images?.[0] || '/placeholder.svg'} alt={item.product?.name} className="w-full h-full object-cover" />
+                <img src={resolveImageUrl(item.product?.images?.[0]) || IMAGE_PLACEHOLDER} alt={item.product?.name} className="w-full h-full object-cover" />
               </Link>
               <div className="flex-1 min-w-0">
                 <Link to={`/product/${item.product?.slug}`} className="text-sm font-semibold text-gray-900 hover:text-amber-600 line-clamp-1">{item.product?.name}</Link>

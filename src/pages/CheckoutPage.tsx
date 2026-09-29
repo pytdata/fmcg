@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, Banknote, CreditCard, Gift, Loader2, MapPin, Store, Ticket, Truck, X } from 'lucide-react';
 import type { GiftBox } from '@/types/index';
 import PaystackTrustBanner from '@/components/common/PaystackTrustBanner';
+import { IMAGE_PLACEHOLDER, resolveImageUrl } from '@/lib/media';
 
 type OrderWithAccessToken = { id: string; order_number: string; total_amount: number; order_access_token: string };
 
@@ -379,7 +380,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-6"><PaystackTrustBanner compact /></div>
       <Link
         to={giftBoxParam === 'curated' ? '/gift-boxes' : giftBoxParam === 'custom' ? '/gift-boxes/custom' : '/cart'}
         className="text-sm text-gray-500 hover:text-amber-600 flex items-center gap-1 mb-4"
@@ -527,12 +527,13 @@ export default function CheckoutPage() {
         <div className="w-full lg:w-96 shrink-0">
           <div className="bg-white rounded-xl border border-gray-100 p-5 shadow-sm sticky top-24">
             <h3 className="font-bold text-gray-900 mb-4">Order Summary</h3>
+            <div className="mb-4"><PaystackTrustBanner compact /></div>
 
             {/* Items — cart, curated gift box, or custom gift box depending on checkout mode */}
             <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
               {giftBoxParam === 'curated' && curatedBox ? (
                 <div className="flex items-center gap-3">
-                  <img src={curatedBox.image_url || ''} alt=""
+                  <img src={resolveImageUrl(curatedBox.image_url) || IMAGE_PLACEHOLDER} alt=""
                     className="w-10 h-10 rounded object-cover bg-gray-50 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-gray-900 truncate flex items-center gap-1">
@@ -548,7 +549,7 @@ export default function CheckoutPage() {
                 <>
                   {customBox.items.map(item => (
                     <div key={item.product_id} className="flex items-center gap-3">
-                      <img src={item.image_url || ''} alt=""
+                      <img src={resolveImageUrl(item.image_url) || IMAGE_PLACEHOLDER} alt=""
                         className="w-10 h-10 rounded object-cover bg-gray-50 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-gray-900 truncate">{item.name}</p>
@@ -576,7 +577,7 @@ export default function CheckoutPage() {
               ) : (
                 cartItems.map(item => (
                   <div key={item.id} className="flex items-center gap-3">
-                    <img src={item.product?.images?.[0]} alt=""
+                    <img src={resolveImageUrl(item.product?.images?.[0]) || IMAGE_PLACEHOLDER} alt=""
                       className="w-10 h-10 rounded object-cover bg-gray-50 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-gray-900 truncate">{item.product?.name}</p>

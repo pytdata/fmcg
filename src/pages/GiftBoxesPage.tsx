@@ -5,7 +5,6 @@ import GiftBoxCard from '@/components/common/GiftBoxCard';
 import { Button } from '@/components/ui/button';
 import { Gift, Sparkles, ArrowRight } from 'lucide-react';
 import type { GiftBox } from '@/types/index';
-import PaystackTrustBanner from '@/components/common/PaystackTrustBanner';
 
 export default function GiftBoxesPage() {
   const [giftBoxes, setGiftBoxes] = useState<GiftBox[]>([]);
@@ -16,7 +15,6 @@ export default function GiftBoxesPage() {
 
   return (
     <div className="pb-12">
-      <div className="container mx-auto px-4 pt-6"><PaystackTrustBanner compact /></div>
       {/* Hero */}
       <div className="bg-gradient-to-r from-emerald-700 to-emerald-900 py-12 sm:py-16">
         <div className="container mx-auto px-4 text-center">

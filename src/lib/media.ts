@@ -17,6 +17,10 @@ function driveId(url: string): string | null {
 export function resolveImageUrl(url?: string | null): string {
   if (!url) return '';
   const trimmed = url.trim();
+  if (trimmed.startsWith('/')) {
+    const apiBase = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
+    return `${apiBase}${trimmed}`;
+  }
   const id = driveId(trimmed);
   if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
   // Dropbox: force direct content

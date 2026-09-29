@@ -133,7 +133,7 @@ export default function CustomGiftBoxPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-1">
               {filtered.map(p => (
                 <div key={p.id} className="border border-gray-100 rounded-lg p-2.5 hover:border-amber-300 transition-colors">
-                  <img src={p.images?.[0] || IMAGE_PLACEHOLDER} alt={p.name} className="w-full h-20 object-cover rounded-md mb-2 bg-gray-50" />
+                  <img src={resolveImageUrl(p.images?.[0]) || IMAGE_PLACEHOLDER} alt={p.name} className="w-full h-20 object-cover rounded-md mb-2 bg-gray-50" />
                   <p className="text-xs font-medium text-gray-900 line-clamp-1 mb-0.5">{p.name}</p>
                   <p className="text-xs text-gray-500 mb-2">GHS {p.price.toFixed(2)}</p>
                   <Button size="sm" variant="outline" className="w-full text-xs h-7" onClick={() => addItem(p)}><Plus className="w-3 h-3 mr-1" /> Add</Button>
@@ -196,7 +196,7 @@ export default function CustomGiftBoxPage() {
               <div className="space-y-2 mb-4 max-h-60 overflow-y-auto">
                 {selectedItems.map(item => (
                   <div key={item.product.id} className="flex items-center gap-2 text-sm">
-                    <img src={item.product.images?.[0] || IMAGE_PLACEHOLDER} alt="" className="w-8 h-8 rounded object-cover bg-gray-50" />
+                    <img src={resolveImageUrl(item.product.images?.[0]) || IMAGE_PLACEHOLDER} alt="" className="w-8 h-8 rounded object-cover bg-gray-50" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-gray-900 truncate">{item.product.name}</p>
                     </div>

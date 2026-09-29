@@ -8,6 +8,7 @@ import { Gift, Tag, ShoppingCart, ArrowLeft, Check, Package } from 'lucide-react
 import { toast } from 'sonner';
 import GiftBoxCard from '@/components/common/GiftBoxCard';
 import type { GiftBox, Product } from '@/types/index';
+import { IMAGE_PLACEHOLDER, resolveImageUrl } from '@/lib/media';
 
 export default function GiftBoxDetailPage() {
   const { slug } = useParams();
@@ -49,7 +50,7 @@ export default function GiftBoxDetailPage() {
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-8">
         <div className="flex flex-col lg:flex-row">
           <div className="w-full lg:w-1/2 aspect-[4/3] lg:aspect-auto bg-gray-50">
-            <img src={giftBox.image_url || ''} alt={giftBox.name} className="w-full h-full object-cover" />
+            <img src={resolveImageUrl(giftBox.image_url) || IMAGE_PLACEHOLDER} alt={giftBox.name} className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 p-5 sm:p-8">
             <div className="flex items-center gap-2 mb-2">
